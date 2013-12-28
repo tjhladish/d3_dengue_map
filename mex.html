@@ -67,8 +67,16 @@ var svg = d3.select("body").append("svg")
 
 var g = svg.append("g");
 
-var COLOR = ["red", "blue", "green" ];
-var counter = 0;
+var FILLS = [ "rgb(247,251,255)", 
+              "rgb(222,235,247)",
+              "rgb(198,219,239)",
+              "rgb(158,202,225)",
+              "rgb(107,174,214)",
+              "rgb(66,146,198)",
+              "rgb(33,113,181)",
+              "rgb(8,81,156)",
+              "rgb(8,48,107)" ];
+
 
 //var projection = d3.geo.kavrayskiy7(),
     color = d3.scale.category20();
@@ -132,8 +140,10 @@ d3.json("yuc_muni2.json", function(error, mx) {
     .attr("d", path_projector)
     .style("stroke", "#333")
     .style("stroke-width", ".2px")
+    .attr("class", "myyuc")
+    .style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; });
    // .style("fill", "transparent");
-    .attr("class", function(){  myclass="q" + (Math.round(Math.random()*100) % 10); return myclass; }); 
+   // .attr("class", function(){  myclass="myyuc q" + (Math.round(Math.random()*100) % 10); return myclass; }); 
   
   g.selectAll("path")
     .data(topojson.object(mx, mx.objects.MEX_adm1).geometries)
@@ -142,13 +152,14 @@ d3.json("yuc_muni2.json", function(error, mx) {
     .attr("fill", "transparent")
     .style("stroke", "#333");
 
+/*
     svg.selectAll("g")
         .data(FEATURELIST)
         .enter().append("path")
         .attr("d", path_projector)
-        .attr("class", function(){  myclass="q" + (Math.round(Math.random()*100) % 10); return myclass; })
+        .attr("class", function(){  myclass="myrect q" + (Math.round(Math.random()*100) % 10); return myclass; })
         .style("stroke", "transparent");
-
+*/
 
    svg.append("path")
    .datum(graticule)
@@ -156,15 +167,20 @@ d3.json("yuc_muni2.json", function(error, mx) {
    .attr("d", path_projector);
 
     
-/*
-    datum(FEATURELIST)
-        .update().
-        .attr("fill", "transparent");
-*/
-
-
 
 });
+
+function update() { 
+   svg.selectAll(".myyuc")
+      .transition()
+      .duration(1000)
+      .style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; })
+}
+
+setInterval(update,1000);
+
+
+
 
 </script>
 
