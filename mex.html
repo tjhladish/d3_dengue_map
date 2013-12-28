@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Mexico Topojson</title>
+<style>
+
+.counties {
+  fill: none;
+}
+
+.states {
+  fill: none;
+  stroke: #fff;
+  stroke-linejoin: round;
+}
+
+.q0 { fill:rgb(247,251,255); }
+.q1 { fill:rgb(222,235,247); }
+.q2 { fill:rgb(198,219,239); }
+.q3 { fill:rgb(158,202,225); }
+.q4 { fill:rgb(107,174,214); }
+.q5 { fill:rgb(66,146,198); }
+.q6 { fill:rgb(33,113,181); }
+.q7 { fill:rgb(8,81,156); }
+.q8 { fill:rgb(8,48,107); }
+
+.graticule {
+fill: none;
+stroke: #000;
+        stroke-opacity: .3;
+        stroke-width: .5px;
+}
+
+.graticule.outline {
+stroke: #333;
+        stroke-opacity: 1;
+        stroke-width: 1.5px;
+}
+
+
+</style>
+
+<body>
+<script src="http://d3js.org/d3.v3.js"></script>
+<script src="http://d3js.org/topojson.v0.js"></script>
+<script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
+<script>
+
+var x = d3.scale.linear()
+    .domain([0, width])
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .domain([0, height])
+    .range([height, 0]);
+
+var width = 1200,
+    height = 800;
+
+var projection = d3.geo.mercator()
+//var projection = d3.geo.kavrayskiy7()
+    .scale(15000)
+    .center([-89, 21]);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var g = svg.append("g");
+
+var COLOR = ["red", "blue", "green" ];
+var counter = 0;
+
+//var projection = d3.geo.kavrayskiy7(),
+    color = d3.scale.category20();
+    graticule = d3.geo.graticule();
+    graticule.precision(0.001);
+    //graticule.minorStep([.4667,.4667]);
+    //graticule.minorStep([0.0041666700,0.0041666700]);
+    graticule.extent([[-89.5,20.5],[-88.5,21.5]]);
+
+var pixel_width = 0.0041666700;
+var pixel_width = pixel_width*4;
+
+var FEATURELIST = [];
+//var FEATURELIST = { "type": "FeatureCollection", "features": [] };
+XMIN=-91; XMAX=-88; XSTEP=pixel_width;
+YMIN=20; YMAX=22; YSTEP=pixel_width;
+for(x=XMIN; x < XMAX; x+=XSTEP ) {
+    for(y=YMIN; y < YMAX; y+=YSTEP ) {
+        var feature = { "type": "Feature",
+           "geometry": {
+             "type": "Polygon",
+             "coordinates": [ [ [x, y], [x, y+YSTEP], [x+XSTEP, y+YSTEP], [x+XSTEP, y], [x, y]] ]
+           }
+        };
+        FEATURELIST.push(feature);
+    }
+}
+
+var test_rect = { "type": "Feature",
+       "geometry": {
+         "type": "Polygon",
+         "coordinates": [
+           [ [-89.5, 20.5], [-89.5, 21.5], [-88.5, 21.5], [-88.5, 20.5], [-89.5, 20.5]]
+           ]
+       }
+};
+
+
+var path_projector = d3.geo.path().projection(projection);
+/*
+  svg.selectAll("rect")
+    .data( [ [,]  ,[,]  ])
+    .enter().append("rect")
+    .attr("x", function(d) { projection(d)[0] })
+    .attr("x", function(d) { projection(d)[1] })
+    .attr("width",  20 )
+    .attr("height", 20 );
+
+
+svg.selectAll("path")
+    .data(features)
+  .enter().append("path")
+    .attr("d", d3.geo.path());
+
+*/ 
+
+d3.json("yuc_muni2.json", function(error, mx) {
+  svg.selectAll("path")
+    .data(topojson.object(mx, mx.objects.yucatan_municipalities).geometries)
+    .enter().append("path")
+    .attr("d", path_projector)
+    .style("stroke", "#333")
+    .style("stroke-width", ".2px")
+   // .style("fill", "transparent");
+    .attr("class", function(){  myclass="q" + (Math.round(Math.random()*100) % 10); return myclass; }); 
+  
+  g.selectAll("path")
+    .data(topojson.object(mx, mx.objects.MEX_adm1).geometries)
+    .enter().append("path")
+    .attr("d", path_projector)
+    .attr("fill", "transparent")
+    .style("stroke", "#333");
+
+    svg.selectAll("g")
+        .data(FEATURELIST)
+        .enter().append("path")
+        .attr("d", path_projector)
+        .attr("class", function(){  myclass="q" + (Math.round(Math.random()*100) % 10); return myclass; })
+        .style("stroke", "transparent");
+
+
+   svg.append("path")
+   .datum(graticule)
+   .attr("class", "graticule")
+   .attr("d", path_projector);
+
+    
+/*
+    datum(FEATURELIST)
+        .update().
+        .attr("fill", "transparent");
+*/
+
+
+
+});
+
+</script>
+
