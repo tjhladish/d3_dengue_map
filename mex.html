@@ -43,8 +43,9 @@ stroke: #333;
 <script src="http://d3js.org/d3.v3.js"></script>
 <script src="http://d3js.org/topojson.v0.js"></script>
 <script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
-<script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
+<script>
 var x = d3.scale.linear()
     .domain([0, width])
     .range([0, width]);
@@ -171,10 +172,24 @@ d3.json("yuc_muni2.json", function(error, mx) {
 });
 
 function update() { 
-   svg.selectAll(".myyuc")
-      .transition()
-      .duration(1000)
-      .style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; })
+   $.get("http://peregrine.hladish.com:8000/next", function(next_day_json_string) { 
+         next_day_data = jQuery.parseJSON(next_day_json_string);
+         //console.log(next_day_data);
+      
+         for(i=0; i< next_day_data.length; i++) {
+            d = next_day_data[i];
+            cx = projection([d.x,d.y])[0];
+            cy = projection([d.x,d.y])[1];
+            //console.log([d.x, d.y, cx, cy ]);
+            var element=svg.append("circle").attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill","red");
+         }
+
+        // .transition()
+        // .duration(1000);
+
+        //http://bl.ocks.org/mbostock/7608400
+        //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; })
+   });
 }
 
 setInterval(update,1000);
