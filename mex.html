@@ -171,28 +171,48 @@ d3.json("yuc_muni2.json", function(error, mx) {
 
 });
 
-function update() { 
-   $.get("http://peregrine.hladish.com:8000/next", function(next_day_json_string) { 
+var unprocessedEvents=[];
+var infectionStash=[];
+
+function getNextDataset() { 
+  $.get("http://peregrine.hladish.com:8000/next", function(next_day_json_string) { 
          next_day_data = jQuery.parseJSON(next_day_json_string);
-         //console.log(next_day_data);
-      
          for(i=0; i< next_day_data.length; i++) {
+            d = next_day_data[i];
+            unprocessedEvents.push(d);
+        }
+        unprocessedEvents=[];
+  });
+}
+
+function drawInfections() {
+
+        //clear previous infections
+         for(i=0;i<infectionStash.length; i++) { infectionStash[i].remove(); }
+         infectionStash=[];
+
+        
+         var lastDay=null;
+         for(i=0; i<unprocessedEvents.length; i++) {
+            d = unprocessedEvents.shift();
             d = next_day_data[i];
             cx = projection([d.x,d.y])[0];
             cy = projection([d.x,d.y])[1];
+
             //console.log([d.x, d.y, cx, cy ]);
             var element=svg.append("circle").attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill","red");
+            infectionStash.push(element); 
          }
 
         // .transition()
         // .duration(1000);
 
-        //http://bl.ocks.org/mbostock/7608400
-        //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; })
-   });
+      //http://bl.ocks.org/mbostock/7608400
+     //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; })
 }
 
-setInterval(update,1000);
+function update() { getNextDataset(); }
+setInterval(update,100);
 
 
 
