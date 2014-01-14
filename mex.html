@@ -45,6 +45,9 @@ stroke: #333;
 <script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
+<div id='curDayDiv' style='font-size:bigger'></div><br>
+<div id='infectionsDiv' style='font-size:bigger'></div>
+
 <script>
 var x = d3.scale.linear()
     .domain([0, width])
@@ -171,50 +174,54 @@ d3.json("yuc_muni2.json", function(error, mx) {
 
 });
 
+var curDay=0;
 var unprocessedEvents=[];
-var infectionStash=[];
+var displayedStash=[];
 
-function getNextDataset() { 
-  $.get("http://peregrine.hladish.com:8000/next", function(next_day_json_string) { 
-         next_day_data = jQuery.parseJSON(next_day_json_string);
-         for(i=0; i< next_day_data.length; i++) {
-            d = next_day_data[i];
-            unprocessedEvents.push(d);
-        }
-        unprocessedEvents=[];
+function getDataset() { 
+  $.get("epi_data/json_dump", function(next_day_json_string) { 
+         console.log("Done downloading...processing");
+         unprocessedEvents = jQuery.parseJSON(next_day_json_string);
+         curDay=0;
   });
 }
 
-function drawInfections() {
+function drawNextDay() {
 
-        //clear previous infections
-         for(i=0;i<infectionStash.length; i++) { infectionStash[i].remove(); }
-         infectionStash=[];
+         //for(i=0;i<displayedStash.length; i++) { displayedStash[i].remove(); }
+         //for(i=0;i<displayedStash.length; i++) { displayedStash[i].style("display", "block");}
+         //displayedStash=[];
 
-        
-         var lastDay=null;
-         for(i=0; i<unprocessedEvents.length; i++) {
-            d = unprocessedEvents.shift();
-            d = next_day_data[i];
-            cx = projection([d.x,d.y])[0];
-            cy = projection([d.x,d.y])[1];
-
-            //console.log([d.x, d.y, cx, cy ]);
-            var element=svg.append("circle").attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill","red");
-            infectionStash.push(element); 
+         //clear previous infections
+         for(i=0;i<displayedStash.length; i++) { displayedStash[i].style("display", "none"); }   //hide
+     
+         var curDayPoints = unprocessedEvents[curDay];
+         for(i=0; i<curDayPoints.length; i++) {
+            d = curDayPoints[i];
+            coords = projection([d[0],d[1]]);
+            cx = coords[0];
+            cy = coords[1];
+            if( i<displayedStash.length) {
+                element = displayedStash[i];
+                element.style("display","block");
+                element.attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill","red");
+            } else {
+                var element=svg.append("circle").attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill","red");
+                displayedStash.push(element); 
+           }
          }
 
-        // .transition()
-        // .duration(1000);
+         $("#curDayDiv").html("Current Day:" + curDay );
+         $("#infectionsDiv").html("#Infections:" + curDayPoints.length);
 
-      //http://bl.ocks.org/mbostock/7608400
+         curDay++;
      //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; })
 }
 
-function update() { getNextDataset(); }
-setInterval(update,100);
+getDataset();
 
-
+setInterval(update,10);
+function update() { drawNextDay(); }
 
 
 </script>
