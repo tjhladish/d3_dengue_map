@@ -215,6 +215,8 @@ function drawNextDay() {
          $("#infectionsDiv").html("#Infections:" + curDayPoints.length);
 
          curDay++;
+         if(curDay > unprocessedEvents.length) curDay=0;
+
      //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; })
 }
 
