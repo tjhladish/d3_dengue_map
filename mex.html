@@ -187,6 +187,7 @@ function getDataset() {
 }
 
 function drawNextDay() {
+         if(curDay >= unprocessedEvents.length) curDay=0;
 
          //for(i=0;i<displayedStash.length; i++) { displayedStash[i].remove(); }
          //for(i=0;i<displayedStash.length; i++) { displayedStash[i].style("display", "block");}
@@ -215,7 +216,6 @@ function drawNextDay() {
          $("#infectionsDiv").html("#Infections:" + curDayPoints.length);
 
          curDay++;
-         if(curDay > unprocessedEvents.length) curDay=0;
 
      //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; })
 }
