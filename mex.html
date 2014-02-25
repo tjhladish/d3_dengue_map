@@ -145,7 +145,8 @@ d3.json("yuc_muni2.json", function(error, mx) {
     .style("stroke", "#333")
     .style("stroke-width", ".2px")
     .attr("class", "myyuc")
-    .style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; });
+    .style("fill", "white");
+   //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; });
    // .style("fill", "transparent");
    // .attr("class", function(){  myclass="myyuc q" + (Math.round(Math.random()*100) % 10); return myclass; }); 
   
@@ -170,7 +171,6 @@ d3.json("yuc_muni2.json", function(error, mx) {
    .attr("class", "graticule")
    .attr("d", path_projector);
 
-    
 
 });
 
@@ -179,9 +179,9 @@ var unprocessedEvents=[];
 var displayedStash=[];
 
 function getDataset() { 
-  $.get("epi_data/json_dump", function(next_day_json_string) { 
+  $.get("epi_data/json_dump", function(json_string) { 
          console.log("Done downloading...processing");
-         unprocessedEvents = jQuery.parseJSON(next_day_json_string);
+         unprocessedEvents = jQuery.parseJSON(json_string);
          curDay=0;
   });
 }
@@ -201,16 +201,23 @@ function drawNextDay() {
 
          //clear previous infections
          for(i=0;i<displayedStash.length; i++) { displayedStash[i].style("display", "none"); }   //hide
+         
+         //muniColorLookup
+         var muni_prevalence={};
      
          var curDayPoints = unprocessedEvents[curDay];
-
          if (curDayPoints != null ) {
+
              for(i=0; i<curDayPoints.length; i++) {
                  d = curDayPoints[i];
                  coords = projection([d[0],d[1]]);
                  cx = coords[0];
                  cy = coords[1];
                  color = getColor(d[2]);
+                 muni =  d[3];
+                 if(muni in muni_prevalence) { muni_prevalence[muni]+=d[2]; } else { muni_prevalence[muni]=d[2];}
+
+
                  if( i<displayedStash.length) {
                      element = displayedStash[i];
                      element.style("display","block");
@@ -220,6 +227,16 @@ function drawNextDay() {
                      displayedStash.push(element); 
                  }
              }
+
+            muni_objects=svg.selectAll(".myyuc")[0];        //array of arrays..first element 
+            for(midx=0; midx<muni_objects.length; midx++ ) { //106
+              if(midx in muni_prevalence) {
+                  yvalue=muni_prevalence[midx];
+                  if (yvalue > 255) { yvalue = 255; }
+                  muni_objects[midx].style["fill"] = d3.rgb(255-yvalue,255-yvalue,255);
+              }
+            }
+
          }
 
          var infection_ct = 0;
