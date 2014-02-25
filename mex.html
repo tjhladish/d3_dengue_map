@@ -186,6 +186,12 @@ function getDataset() {
   });
 }
 
+function getColor(value) {
+    var min=0;  var max=5;
+    var s = (value-min)/(max-min);
+    return d3.hsl(360.0, 100, .5 ); //h,s,l red
+}
+
 function drawNextDay() {
          if(curDay >= unprocessedEvents.length) curDay=0;
 
@@ -197,23 +203,29 @@ function drawNextDay() {
          for(i=0;i<displayedStash.length; i++) { displayedStash[i].style("display", "none"); }   //hide
      
          var curDayPoints = unprocessedEvents[curDay];
-         for(i=0; i<curDayPoints.length; i++) {
-            d = curDayPoints[i];
-            coords = projection([d[0],d[1]]);
-            cx = coords[0];
-            cy = coords[1];
-            if( i<displayedStash.length) {
-                element = displayedStash[i];
-                element.style("display","block");
-                element.attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill","red");
-            } else {
-                var element=svg.append("circle").attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill","red");
-                displayedStash.push(element); 
-           }
+
+         if (curDayPoints != null ) {
+             for(i=0; i<curDayPoints.length; i++) {
+                 d = curDayPoints[i];
+                 coords = projection([d[0],d[1]]);
+                 cx = coords[0];
+                 cy = coords[1];
+                 color = getColor(d[2]);
+                 if( i<displayedStash.length) {
+                     element = displayedStash[i];
+                     element.style("display","block");
+                     element.attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill",color);
+                 } else {
+                     var element=svg.append("circle").attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill",color);
+                     displayedStash.push(element); 
+                 }
+             }
          }
 
+         var infection_ct = 0;
+         if (curDayPoints != null) { infection_ct = curDayPoints.length; }
          $("#curDayDiv").html("Current Day:" + curDay );
-         $("#infectionsDiv").html("#Infections:" + curDayPoints.length);
+         $("#infectionsDiv").html("#Infections:" + infection_ct);
 
          curDay++;
 
