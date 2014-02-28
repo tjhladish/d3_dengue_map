@@ -16,7 +16,9 @@
 <script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
-<button id='startStopButton' onClick="runSimulation()">Run</button> 
+<button id='startStopButton' onClick="runSimulation()">Start/Stop</button> 
+<button id='restart' onClick="restartSimulation()">Restart</button> 
+Interval: <input type="number" id="interval" value="7" onChange="changeInterval()">
 <div id='curDayDiv' style='font-size:bigger'></div><br>
 <div id='infectionsDiv' style='font-size:bigger'></div>
 
@@ -24,6 +26,7 @@
 
 var width = 1200;
 var height = 800;
+var interval = changeInterval(); // Update polygons this often
 
 var projection = d3.geo.mercator()
 //var projection = d3.geo.kavrayskiy7()
@@ -129,46 +132,59 @@ function getColor(value) {
     return d3.hsl(360.0, 100,0.5); //h,s,l red
 }
 
-function drawNextDay() {
-    if(curDay >= unprocessedEvents.length) curDay=0;
+function updatePolygonColors(interval) {
+    //muniColorLookup
+    var muni_prevalence={};
+    var infection_ct=0;
 
-    //for(i=0;i<displayedStash.length; i++) { displayedStash[i].remove(); }
-    //for(i=0;i<displayedStash.length; i++) { displayedStash[i].style("display", "block");}
-    //displayedStash=[];
+    var startDay = curDay;
+    if(startDay > unprocessedEvents.length) { startDay=0; curDay=0; }
+    var endDay = startDay+interval;
+    if(endDay > unprocessedEvents.length) endDay=unprocessedEvents.length;
+
+    for(day=startDay; day < endDay; day++ ) {
+        var curDayPoints = unprocessedEvents[day];
+        if (curDayPoints != null ) {
+            // tally infections for each municipality
+            for(i=0; i<curDayPoints.length; i++) {
+                d = curDayPoints[i];
+                muni =  d[3];
+                infection_ct += d[2];
+                if(muni in muni_prevalence) { muni_prevalence[muni]+=d[2]; } else { muni_prevalence[muni]=d[2];}
+            }
+        }
+    }
+        
+    //color municipalities by incidence
+    muni_objects=svg.selectAll(".myyuc")[0];        //array of arrays..first element 
+    for(midx=0; midx<muni_objects.length; midx++ ) { //106
+        if(midx in muni_prevalence) {
+            yvalue=muni_prevalence[midx];
+            populationSize = muniMetaData[midx]["pop"];
+            if ( populationSize == undefined) populationSize=1;
+            intensity_rescale = 1000.0/interval;
+            yvalue = intensity_rescale * (yvalue/populationSize)*255;
+
+            if (yvalue > 255) { yvalue = 255; }
+            muni_objects[midx].style["fill"] = d3.rgb(255-yvalue,255-yvalue,255);
+        } else {
+            muni_objects[midx].style["fill"] = "white";
+        }
+    }
+
+    $("#curDayDiv").html("Current Period:" + startDay + "-" + endDay );
+    $("#infectionsDiv").html("#Infections:" + infection_ct);
+
+}
+
+
+function drawDailyEvents(dayNumber) {
 
     //clear previous infections
     for(i=0;i<displayedStash.length; i++) { displayedStash[i].style("display", "none"); }   //hide
 
-    //muniColorLookup
-    var muni_prevalence={};
-
-    var curDayPoints = unprocessedEvents[curDay];
+    var curDayPoints = unprocessedEvents[dayNumber];
     if (curDayPoints != null ) {
-        // tally infections for each municipality
-        for(i=0; i<curDayPoints.length; i++) {
-            d = curDayPoints[i];
-            muni =  d[3];
-            if(muni in muni_prevalence) { muni_prevalence[muni]+=d[2]; } else { muni_prevalence[muni]=d[2];}
-        }
-        
-        // color municipalities by incidence
-        muni_objects=svg.selectAll(".myyuc")[0];        //array of arrays..first element 
-        for(midx=0; midx<muni_objects.length; midx++ ) { //106
-            if(midx in muni_prevalence) {
-
-                yvalue=muni_prevalence[midx];
-                populationSize = muniMetaData[midx]["pop"];
-                if ( populationSize == undefined) populationSize=1;
-                intensity_rescale = 1000
-                    yvalue = intensity_rescale * (yvalue/populationSize)*255;
-
-                if (yvalue > 255) { yvalue = 255; }
-                muni_objects[midx].style["fill"] = d3.rgb(255-yvalue,255-yvalue,255);
-            } else {
-                muni_objects[midx].style["fill"] = "white";
-            }
-        }
-        
         // draw each infection
         for(i=0; i<curDayPoints.length; i++) {
             d = curDayPoints[i];
@@ -187,36 +203,43 @@ function drawNextDay() {
                 displayedStash.push(element); 
             }
         }
-
-
     }
 
     var infection_ct = 0;
     if (curDayPoints != null) { infection_ct = curDayPoints.length; }
-    $("#curDayDiv").html("Current Day:" + curDay );
-    $("#infectionsDiv").html("#Infections:" + infection_ct);
-
-    curDay++;
-
-    //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; })
+   // $("#curDayDiv").html("Current Day:" + dayNumber );
+   // $("#infectionsDiv").html("#Infections:" + infection_ct);
 }
 
 getMuniMetaData();
 getDataset();
 
-function update() { drawNextDay(); }
+function update() { 
+    console.log("Update " + interval );
+    if (curDay % interval == 0) updatePolygonColors(interval);
+    drawDailyEvents(curDay);
+    curDay++;
+    if (curDay > unprocessedEvents.length) curDay = 0;
+}
 
 function runSimulation() { 
     if(updateFunctionTimer == undefined) {
         console.log("Starting simulation");
        // update();  //for debuging 
-         updateFunctionTimer = setInterval(update,10); 
+         updateFunctionTimer = setInterval(update,10);  //r
     } else {
         console.log("Stopping simulation");
         clearInterval(updateFunctionTimer);
         updateFunctionTimer=undefined;
     }
 }
+
+function changeInterval() {
+    interval=parseInt($("#interval").val());
+    return interval;
+}
+
+function restartSimulation() { curDay=0;}
 
 
 
