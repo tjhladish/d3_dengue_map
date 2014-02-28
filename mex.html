@@ -107,9 +107,10 @@ var displayedStash=[];
 var updateFunctionTimer=undefined;
 
 function getDataset() { 
-  $.get("epi_data/json_dump", function(json_string) { 
+  $.get("epi_data/simulator_output.json", function(json_string) { 
          console.log("Done downloading...processing");
-         unprocessedEvents = jQuery.parseJSON(json_string);
+        // unprocessedEvents = jQuery.parseJSON(json_string);
+         unprocessedEvents = json_string;
          curDay=0;
   });
 }
