@@ -16,9 +16,13 @@
 <script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
+Starting day: <input type="number" id="startingDayBox" value="100" min="1" max="365" onChange="changeStartDay()"> <br>
+Time step: <input type="number" id="timeStepBox" value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> <br>
+Expansion Factor: <input type="number" id="expansionFactorBox" value="36" min="1" max="100" onChange="changeExpansionFactor()">  <br>
+
 <button id='startStopButton' onClick="runSimulation()">Start/Stop</button> 
-<button id='restart' onClick="restartSimulation()">Restart</button> 
-Interval: <input type="number" id="interval" value="7" onChange="changeInterval()">
+<button id='restart' onClick="restartSimulation()">Restart</button> <br>
+
 <div id='curDayDiv' style='font-size:bigger'></div><br>
 <div id='infectionsDiv' style='font-size:bigger'></div>
 
@@ -26,7 +30,9 @@ Interval: <input type="number" id="interval" value="7" onChange="changeInterval(
 
 var width = 1200;
 var height = 800;
-var interval = changeInterval(); // Update polygons this often
+var timeStep = changeTimeStep(); // Update polygons this often
+var expansionFactor =changeExpansionFactor();
+var startDay = changeStartDay();
 
 var projection = d3.geo.mercator()
 //var projection = d3.geo.kavrayskiy7()
@@ -132,17 +138,17 @@ function getColor(value) {
     return d3.hsl(360.0, 100,0.5); //h,s,l red
 }
 
-function updatePolygonColors(interval) {
+function updatePolygonColors(timeStep) {
     //muniColorLookup
     var muni_prevalence={};
     var infection_ct=0;
 
-    var startDay = curDay;
-    if(startDay > unprocessedEvents.length) { startDay=0; curDay=0; }
-    var endDay = startDay+interval;
+    var _startDay = curDay;
+    if(_startDay > unprocessedEvents.length) { _startDay=0; curDay=0; }
+    var endDay = _startDay+timeStep;
     if(endDay > unprocessedEvents.length) endDay=unprocessedEvents.length;
 
-    for(day=startDay; day < endDay; day++ ) {
+    for(day=_startDay; day < endDay; day++ ) {
         var curDayPoints = unprocessedEvents[day];
         if (curDayPoints != null ) {
             // tally infections for each municipality
@@ -162,7 +168,7 @@ function updatePolygonColors(interval) {
             yvalue=muni_prevalence[midx];
             populationSize = muniMetaData[midx]["pop"];
             if ( populationSize == undefined) populationSize=1;
-            intensity_rescale = 1000.0/interval;
+            intensity_rescale = 1000.0/timeStep;
             yvalue = intensity_rescale * (yvalue/populationSize)*255;
 
             if (yvalue > 255) { yvalue = 255; }
@@ -172,8 +178,8 @@ function updatePolygonColors(interval) {
         }
     }
 
-    $("#curDayDiv").html("Current Period:" + startDay + "-" + endDay );
-    $("#infectionsDiv").html("#Infections:" + infection_ct);
+    $("#curDayDiv").html("Current Period:" + _startDay + "-" + endDay );
+    $("#infectionsDiv").html("# Cases:" + infection_ct);
 
 }
 
@@ -186,7 +192,9 @@ function drawDailyEvents(dayNumber) {
     var curDayPoints = unprocessedEvents[dayNumber];
     if (curDayPoints != null ) {
         // draw each infection
-        for(i=0; i<curDayPoints.length; i++) {
+        // Draw only cases, which amount to about 1 out of 36 infections
+        //for(i=0; i<curDayPoints.length; i++) {
+        for(i=0; i<curDayPoints.length; i += expansionFactor) {
             d = curDayPoints[i];
             coords = projection([d[0],d[1]]);
             cx = coords[0];
@@ -215,8 +223,8 @@ getMuniMetaData();
 getDataset();
 
 function update() { 
-    console.log("Update " + interval );
-    if (curDay % interval == 0) updatePolygonColors(interval);
+    console.log("Update " + timeStep );
+    if (curDay % timeStep == 0) updatePolygonColors(timeStep);
     drawDailyEvents(curDay);
     curDay++;
     if (curDay > unprocessedEvents.length) curDay = 0;
@@ -226,7 +234,7 @@ function runSimulation() {
     if(updateFunctionTimer == undefined) {
         console.log("Starting simulation");
        // update();  //for debuging 
-         updateFunctionTimer = setInterval(update,10);  //r
+         updateFunctionTimer = setInterval(update,20);  //r
     } else {
         console.log("Stopping simulation");
         clearInterval(updateFunctionTimer);
@@ -234,10 +242,10 @@ function runSimulation() {
     }
 }
 
-function changeInterval() {
-    interval=parseInt($("#interval").val());
-    return interval;
-}
+function changeStartDay() { startDay=parseInt($("#startDayBox").val()); return startDay; }
+function changeTimeStep() { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
+function changeExpansionFactor() { expansionFactor=parseInt($("#expansionFactorBox").val()); return expansionFactor; }
+
 
 function restartSimulation() { curDay=0;}
 

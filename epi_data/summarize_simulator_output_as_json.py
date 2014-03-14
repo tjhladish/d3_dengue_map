@@ -126,7 +126,8 @@ def aggregate_data(pixels, data):
 
     return json_data
 
-epi_data_file = 'prevalence5490.out'
+#epi_data_file = 'prevalence5490.out'
+epi_data_file = 'incidence_5500.csv'
 pixels, data = get_data(epi_data_file)
 json_data = aggregate_data(pixels, data)
 print json.dumps(json_data)
