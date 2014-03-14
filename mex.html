@@ -23,97 +23,63 @@ Expansion Factor: <input type="number" id="expansionFactorBox" value="36" min="1
 <button id='startStopButton' onClick="runSimulation()">Start/Stop</button> 
 <button id='restart' onClick="restartSimulation()">Restart</button> <br>
 
-<div id='curDayDiv' style='font-size:bigger'></div><br>
-<div id='infectionsDiv' style='font-size:bigger'></div>
+<div id='curDayDiv'></div>
+<div id='infectionsDiv'></div>
 
 <script>
 
-var width = 1200;
+var width = 1100;
 var height = 800;
 var timeStep = changeTimeStep(); // Update polygons this often
 var expansionFactor =changeExpansionFactor();
 var startDay = changeStartDay();
 
-var projection = d3.geo.mercator()
-//var projection = d3.geo.kavrayskiy7()
-    .scale(15000)
-    .center([-89, 21]);
-
-var svg = d3.select("body").append("svg").attr("width", width).attr("height", height);
-var g = svg.append("g");
-
-//var projection = d3.geo.kavrayskiy7();
-var    color = d3.scale.category20();
-    graticule = d3.geo.graticule();
-    graticule.precision(0.001);
-    //graticule.minorStep([.4667,.4667]);
-    //graticule.minorStep([0.0041666700,0.0041666700]);
-    graticule.extent([[-89.5,20.5],[-88.5,21.5]]);
-
-var pixel_width = 0.0041666700;
-var pixel_width = pixel_width*4;
-
-var FEATURELIST = [];
-//var FEATURELIST = { "type": "FeatureCollection", "features": [] };
-XMIN=-91; XMAX=-88; XSTEP=pixel_width;
-YMIN=20; YMAX=22; YSTEP=pixel_width;
-for(x=XMIN; x < XMAX; x+=XSTEP ) {
-    for(y=YMIN; y < YMAX; y+=YSTEP ) {
-        var feature = { "type": "Feature",
-           "geometry": {
-             "type": "Polygon",
-             "coordinates": [ [ [x, y], [x, y+YSTEP], [x+XSTEP, y+YSTEP], [x+XSTEP, y], [x, y]] ]
-           }
-        };
-        FEATURELIST.push(feature);
-    }
-}
-
-var test_rect = { "type": "Feature",
-       "geometry": {
-         "type": "Polygon",
-         "coordinates": [
-           [ [-89.5, 20.5], [-89.5, 21.5], [-88.5, 21.5], [-88.5, 20.5], [-89.5, 20.5]]
-           ]
-       }
-};
-
-
+var svgMapElement = d3.select("body").append("svg").attr("width", width).attr("height", height);
+var projection = d3.geo.mercator().scale(15000).center([-89, 21]);
 var path_projector = d3.geo.path().projection(projection);
-
-d3.json("yuc_muni2.json", function(error, mx) {
-  svg.selectAll("path")
-    .data(topojson.object(mx, mx.objects.yucatan_municipalities).geometries)
-    .enter().append("path")
-    .attr("d", path_projector)
-    .style("stroke", "#333")
-    .style("stroke-width", ".2px")
-    .attr("class", "myyuc")
-    .style("fill", "white");
-   //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; });
-   // .style("fill", "transparent");
-   // .attr("class", function(){  myclass="myyuc q" + (Math.round(Math.random()*100) % 10); return myclass; }); 
-  
-  g.selectAll("path")
-    .data(topojson.object(mx, mx.objects.MEX_adm1).geometries)
-    .enter().append("path")
-    .attr("d", path_projector)
-    .attr("fill", "transparent")
-    .style("stroke", "#333");
-
-   svg.append("path")
-   .datum(graticule)
-   .attr("class", "graticule")
-   .attr("d", path_projector);
-
-
-});
 
 var curDay=0;
 var unprocessedEvents=[];
 var muniMetaData={};
 var displayedStash=[];
 var updateFunctionTimer=undefined;
+
+
+function drawMap() {
+
+    var   graticule = d3.geo.graticule();
+          graticule.precision(0.001);
+          graticule.extent([[-89.5,20.5],[-88.5,21.5]]);
+
+    d3.json("yuc_muni2.json", function(error, mx) {
+      svgMapElement.selectAll("path")
+        .data(topojson.object(mx, mx.objects.yucatan_municipalities).geometries)
+        .enter().append("path")
+        .attr("d", path_projector)
+        .style("stroke", "#333")
+        .style("stroke-width", ".2px")
+        .attr("class", "myyuc")
+        .style("fill", "white");
+       //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; });
+       // .style("fill", "transparent");
+       // .attr("class", function(){  myclass="myyuc q" + (Math.round(Math.random()*100) % 10); return myclass; }); 
+
+     var g = svgMapElement.append("g");
+      
+      g.selectAll("path")
+        .data(topojson.object(mx, mx.objects.MEX_adm1).geometries)
+        .enter().append("path")
+        .attr("d", path_projector)
+        .attr("fill", "transparent")
+        .style("stroke", "#333");
+
+       svgMapElement.append("path")
+       .datum(graticule)
+       .attr("class", "graticule")
+       .attr("d", path_projector);
+
+    });
+}
 
 function getDataset() { 
   $.get("epi_data/simulator_output.json", function(json_string) { 
@@ -162,7 +128,7 @@ function updatePolygonColors(timeStep) {
     }
         
     //color municipalities by incidence
-    muni_objects=svg.selectAll(".myyuc")[0];        //array of arrays..first element 
+    muni_objects=svgMapElement.selectAll(".myyuc")[0];        //array of arrays..first element 
     for(midx=0; midx<muni_objects.length; midx++ ) { //106
         if(midx in muni_prevalence) {
             yvalue=muni_prevalence[midx];
@@ -179,7 +145,7 @@ function updatePolygonColors(timeStep) {
     }
 
     $("#curDayDiv").html("Current Period:" + _startDay + "-" + endDay );
-    $("#infectionsDiv").html("# Cases:" + infection_ct);
+    $("#infectionsDiv").html("# Infections:" + infection_ct);
 
 }
 
@@ -207,7 +173,7 @@ function drawDailyEvents(dayNumber) {
                 element.style("display","block");
                 element.attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill",color);
             } else {
-                var element=svg.append("circle").attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill",color);
+                var element=svgMapElement.append("circle").attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill",color);
                 displayedStash.push(element); 
             }
         }
@@ -218,9 +184,6 @@ function drawDailyEvents(dayNumber) {
    // $("#curDayDiv").html("Current Day:" + dayNumber );
    // $("#infectionsDiv").html("#Infections:" + infection_ct);
 }
-
-getMuniMetaData();
-getDataset();
 
 function update() { 
     console.log("Update " + timeStep );
@@ -245,10 +208,12 @@ function runSimulation() {
 function changeStartDay() { startDay=parseInt($("#startDayBox").val()); return startDay; }
 function changeTimeStep() { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
 function changeExpansionFactor() { expansionFactor=parseInt($("#expansionFactorBox").val()); return expansionFactor; }
-
-
 function restartSimulation() { curDay=0;}
 
+
+drawMap();
+getMuniMetaData();
+getDataset();
 
 
 </script>
