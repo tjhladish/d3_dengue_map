@@ -10,7 +10,8 @@
 
 .graticule.outline { stroke: #333; stroke-opacity: 1; stroke-width: 1.5px; }
 
-.axis path, .axis line { fill: none; stroke: #000; shape-rendering: crispEdges; }
+.axis path { fill: none; stroke-width: 1px; stroke: #000; }
+.axis line { fill: none; stroke: #000; shape-rendering: crispEdges; }
 .line { fill: none; stroke: steelblue; stroke-width: 1.5px; }
 
 </style>
@@ -26,48 +27,49 @@
 
 <nav class="navbar navbar-default" role="navigation">
   <div class="container-fluid">
-      <div class="navbar-header">
-          <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
-            <div class="btn-group"> 
-            <button id='startStopButton' class="btn btn-success" onClick="runSimulation()">Start/Stop</button>
-            <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button> 
-           Starting day: <input type="number" id="startingDayBox" value="100" min="1" max="365" onChange="changeStartDay()"> 
-    Time step: <input type="number" id="timeStepBox" value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
-    Expansion Factor: <input type="number" id="expansionFactorBox" value="36" min="1" max="100" onChange="changeExpansionFactor()"> 
-           <span id='curDayDiv'></span>
-           <span id='infectionsDiv'></span>
-          </div>
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
+      <div class="btn-group"> 
+        <button id='startStopButton' class="btn btn-success" onClick="runSimulation()">Start/Stop</button>
+        <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button> 
+        Starting day: <input type="number" id="startingDayBox" value="100" min="1" max="365" onChange="changeStartDay()"> 
+        Time step: <input type="number" id="timeStepBox" value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
+        Expansion Factor: <input type="number" id="expansionFactorBox" value="36" min="1" max="100" onChange="changeExpansionFactor()"> 
+        <span id='curDayDiv'></span>
+        <span id='infectionsDiv'></span>
       </div>
+    </div>
   </div>
 </nav>
 
-<div class="container-fluid">
-    <div class="col-md-12"> 
-        <div id='tsPlotDiv'> </div>
-        <div id='svgMapDiv'> </div>
-    </div>
+<div class="container">
+  <div class="col-md-12"> 
+    <div id='tsPlotDiv'> </div>
+    <div id='svgMapDiv'> </div>
+  </div>
 </div>
 
 <script>
 
 
-var width =  document.getElementById('svgMapDiv').offsetWidth;
-var height = 800;
-var timeStep = changeTimeStep(); // Update polygons this often
-var expansionFactor =changeExpansionFactor();
-var startDay = 0;
-var tsPlotDivHeight=100;
+var width             = document.getElementById('svgMapDiv').offsetWidth;
+var height            = 800;
+var timeStep          = changeTimeStep(); // Update polygons this often
+var expansionFactor   = changeExpansionFactor();
+var startDay          = 0;
+var tsPlotDivHeight   = 150;
 
 var svgMapElement = d3.select("#svgMapDiv").append("svg").attr("width", width).attr("height", height);
 var tsPlotElement = d3.select("#tsPlotDiv").append("svg").attr("width", width).attr("height", tsPlotDivHeight);
 
-var projection = d3.geo.mercator().scale(18000).center([-89, 21]);
+var projection = d3.geo.mercator().scale(14500).center([-89.2, 20.8]);
 var path_projector = d3.geo.path().projection(projection);
 
 var curDay=0;
 var timeSeriesX=undefined;
 var timeSeriesY=undefined;
 var timeSeriesIndicator=undefined;
+var timeSeriesIndicatorBar=undefined;
 
 var unprocessedEvents=[];
 var muniMetaData={};
@@ -84,6 +86,9 @@ startDay = changeStartDay();
 curDay   = startDay;
 
 function drawTsPlot() {
+
+    
+    
     var data = calculateTimeSeriesData();
 
     //for(i=0; i < data.length; i++ ) {
@@ -94,31 +99,57 @@ function drawTsPlot() {
     //http://bl.ocks.org/mbostock/3883245
     //http://square.github.io/cubism/
 
-    timeSeriesX = d3.scale.linear().range([0,width]);
-    timeSeriesY = d3.scale.linear().range([tsPlotDivHeight, 0]);
+    var margin = {top: 20, right: 0, bottom: 20, left: 180};
+    timeSeriesX = d3.scale.linear().range([margin.left, width - margin.right]);
+    timeSeriesY = d3.scale.linear().range([tsPlotDivHeight - margin.bottom, margin.top]);
 
-    timeSeriesX.domain(d3.extent(data, function(d) { return d[0]; }));
+    var xDomain = d3.extent(data, function(d) { return d[0]; });
+    console.log(xDomain);
+    timeSeriesX.domain(xDomain);
     var yDomain = d3.extent(data, function(d) { return d[1]; });
-    yDomain[0] = -200; // This makes it possible to draw a circle that's not cropped
+    yDomain[0] = 0; //-0.1 * yDomain[1]; // This makes it possible to draw a circle that's not cropped
     timeSeriesY.domain(yDomain);
 
 
-    var xAxis = d3.svg.axis().scale(timeSeriesX).orient("bottom");
-    var yAxis = d3.svg.axis().scale(timeSeriesY).orient("left");
+    var xAxis = d3.svg.axis()
+                  .scale(timeSeriesX)
+                  .orient("bottom");
+    var yDomainMagnitude = Math.floor(Math.log(yDomain[1])/Math.LN10);
+    var yMaxTick = Math.floor(yDomain[1]/Math.pow(10,yDomainMagnitude)) * Math.pow(10,yDomainMagnitude);
+    var yTicks = [0, Math.round(yMaxTick/2), yMaxTick]
+    var yAxis = d3.svg.axis()
+                  .scale(timeSeriesY)
+                  .tickValues(yTicks)
+                  .orient("left");
 
     var line = d3.svg.line()
         .x(function(d) { return timeSeriesX(d[0]); })
         .y(function(d) { return timeSeriesY(d[1]); });
 
+    tsPlotElement
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", tsPlotDivHeight + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    
+    var xAxisOffset = tsPlotDivHeight - 10;
     tsPlotElement.append("g")
         .attr("class", "x axis")
-        .attr("transform", "translate(0," + tsPlotDivHeight + ")")
-        .call(xAxis);
+        .attr("transform", "translate(0," + xAxisOffset + ")")
+        .call(xAxis)
+      .append("text")
+        .attr("x", (margin.left + width)/2)
+        .attr("dx", "-.71em")
+        .attr("y", 40)
+        //.style("text-anchor", "end")
+        .text("Day");
 
     tsPlotElement.append("g")
         .attr("class", "y axis")
+        .attr("transform", "translate(" + 150 + ",0)")
         .call(yAxis)
-        .append("text")
+      .append("text")
         .attr("transform", "rotate(-90)")
         .attr("y", 6)
         .attr("dy", ".71em")
@@ -150,6 +181,19 @@ function drawTsPlot() {
         .attr("fill","transparent")
         .attr("cx", function(d) { return timeSeriesX(d.x); })
         .attr("cy", function(d) { return timeSeriesY(d.y); })
+        ;
+
+    timeSeriesIndicatorBar = tsPlotElement.append("g")
+        .attr("class", "bar")
+        .selectAll("rect")
+        .data([datapoint])
+        .enter().append("rect")
+        .attr("stroke","transparent")
+        .attr("fill","transparent")
+        .attr("x", function(d) { return timeSeriesX(d.x) - 15; })
+        .attr("y", 0)
+        .attr("width", 30)
+        .attr("height", tsPlotDivHeight)
         .call(drag);
 }
 
@@ -279,18 +323,21 @@ function updateTimeSeriesIndicator(dayNumber, numberInfected) {
             .attr("cx", timeSeriesX(dayNumber))
             .attr("cy", timeSeriesY(numberInfected));
 
+        timeSeriesIndicatorBar
+            .attr("x", timeSeriesX(dayNumber) -15);
+
         $("#infectionsDiv").html("# Infections:" + numberInfected);
 }
 
-function addTimeSeriesPoint(dayNumber, numberInfected) {
-       x = (dayNumber/3750)*1100;
-       y = tsPlotDivHeight * (1 - (numberInfected/1800));
-
-       var point=tsPlotElement.append("circle")
-        .attr("cx", x)
-        .attr("cy", y)
-        .attr("r",1).attr("fill","red");
-}
+//function addTimeSeriesPoint(dayNumber, numberInfected) {
+//       x = (dayNumber/3750)*1100;
+//       y = tsPlotDivHeight * (1 - (numberInfected/1800));
+//
+//       var point=tsPlotElement.append("circle")
+//        .attr("cx", x)
+//        .attr("cy", y)
+//        .attr("r",1).attr("fill","red");
+//}
 
 
 function drawDailyEvents(dayNumber) {
@@ -366,10 +413,11 @@ function dragstarted(d) {
 
 function dragged(d) {
     console.log(d);
-    var estimateDay = (d.x/width)*3750;
+    var estimateDay = ((15+d.x)/width)*3750;
     $("#startingDayBox").val(Math.round(estimateDay));
     changeStartDay();
-    d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+    d3.select(this).attr("x", d.x = d3.event.x-15);
+    //d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
 }
 
 function dragended(d) {
