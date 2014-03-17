@@ -1,49 +1,157 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>Mexico Topojson</title>
-<style>
+<head>
+     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
+<title>Mexico Topojson</title>
+
+<style>
 .graticule { fill: none; stroke: #000; stroke-opacity: .3; stroke-width: .5px; }
 
 .graticule.outline { stroke: #333; stroke-opacity: 1; stroke-width: 1.5px; }
 
+.axis path, .axis line { fill: none; stroke: #000; shape-rendering: crispEdges; }
+.line { fill: none; stroke: steelblue; stroke-width: 1.5px; }
 
 </style>
+</head>
 
 <body>
+
 <script src="http://d3js.org/d3.v3.js"></script>
 <script src="http://d3js.org/topojson.v0.js"></script>
 <script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="bootstrap/js/bootstrap.min.js"></script>
 
-Starting day: <input type="number" id="startingDayBox" value="100" min="1" max="365" onChange="changeStartDay()"> <br>
-Time step: <input type="number" id="timeStepBox" value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> <br>
-Expansion Factor: <input type="number" id="expansionFactorBox" value="36" min="1" max="100" onChange="changeExpansionFactor()">  <br>
+<nav class="navbar navbar-default" role="navigation">
+  <div class="container-fluid">
+      <div class="navbar-header">
+          <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
+            <div class="btn-group"> 
+            <button id='startStopButton' class="btn btn-success" onClick="runSimulation()">Start/Stop</button>
+            <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button> 
+           Starting day: <input type="number" id="startingDayBox" value="100" min="1" max="365" onChange="changeStartDay()"> 
+    Time step: <input type="number" id="timeStepBox" value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
+    Expansion Factor: <input type="number" id="expansionFactorBox" value="36" min="1" max="100" onChange="changeExpansionFactor()"> 
+           <span id='curDayDiv'></span>
+           <span id='infectionsDiv'></span>
+          </div>
+      </div>
+  </div>
+</nav>
 
-<button id='startStopButton' onClick="runSimulation()">Start/Stop</button> 
-<button id='restart' onClick="restartSimulation()">Restart</button> <br>
-
-<div id='curDayDiv'></div>
-<div id='infectionsDiv'></div>
+<div class="container-fluid">
+    <div class="col-md-12"> 
+        <div id='tsPlotDiv'> </div>
+        <div id='svgMapDiv'> </div>
+    </div>
+</div>
 
 <script>
 
-var width = 1100;
+
+var width =  document.getElementById('svgMapDiv').offsetWidth;
 var height = 800;
 var timeStep = changeTimeStep(); // Update polygons this often
 var expansionFactor =changeExpansionFactor();
-var startDay = changeStartDay();
+var startDay = 0;
+var tsPlotDivHeight=100;
 
-var svgMapElement = d3.select("body").append("svg").attr("width", width).attr("height", height);
-var projection = d3.geo.mercator().scale(15000).center([-89, 21]);
+var svgMapElement = d3.select("#svgMapDiv").append("svg").attr("width", width).attr("height", height);
+var tsPlotElement = d3.select("#tsPlotDiv").append("svg").attr("width", width).attr("height", tsPlotDivHeight);
+
+var projection = d3.geo.mercator().scale(18000).center([-89, 21]);
 var path_projector = d3.geo.path().projection(projection);
 
 var curDay=0;
+var timeSeriesX=undefined;
+var timeSeriesY=undefined;
+var timeSeriesIndicator=undefined;
+
 var unprocessedEvents=[];
 var muniMetaData={};
 var displayedStash=[];
 var updateFunctionTimer=undefined;
+var lastDayLength=1;
 
+function changeStartDay() { startDay=parseInt($("#startingDayBox").val()); curDay=startDay; return startDay; }
+function changeTimeStep() { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
+function changeExpansionFactor() { expansionFactor=parseInt($("#expansionFactorBox").val()); return expansionFactor; }
+function restartSimulation() { changeStartDay();}
+
+startDay = changeStartDay();
+curDay   = startDay;
+
+function drawTsPlot() {
+    var data = calculateTimeSeriesData();
+
+    //for(i=0; i < data.length; i++ ) {
+    //   addTimeSeriesPoint(data[i][0],data[i][1]);
+    //}
+
+    //http://www.janwillemtulp.com/2011/04/01/tutorial-line-chart-in-d3/
+    //http://bl.ocks.org/mbostock/3883245
+    //http://square.github.io/cubism/
+
+    timeSeriesX = d3.scale.linear().range([0,width]);
+    timeSeriesY = d3.scale.linear().range([tsPlotDivHeight, 0]);
+
+    timeSeriesX.domain(d3.extent(data, function(d) { return d[0]; }));
+    var yDomain = d3.extent(data, function(d) { return d[1]; });
+    yDomain[0] = -200; // This makes it possible to draw a circle that's not cropped
+    timeSeriesY.domain(yDomain);
+
+
+    var xAxis = d3.svg.axis().scale(timeSeriesX).orient("bottom");
+    var yAxis = d3.svg.axis().scale(timeSeriesY).orient("left");
+
+    var line = d3.svg.line()
+        .x(function(d) { return timeSeriesX(d[0]); })
+        .y(function(d) { return timeSeriesY(d[1]); });
+
+    tsPlotElement.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + tsPlotDivHeight + ")")
+        .call(xAxis);
+
+    tsPlotElement.append("g")
+        .attr("class", "y axis")
+        .call(yAxis)
+        .append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("Incidence");
+
+
+    tsPlotElement.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("d", line);
+
+    var drag = d3.behavior.drag()
+        .on("dragstart", dragstarted)
+        .on("drag", dragged)
+        .on("dragend", dragended);
+// http://square.github.io/cubism/demo/
+
+    datapoint = {'x':0, 'y':0};
+
+    timeSeriesIndicator = tsPlotElement.append("g")
+        .attr("class", "dot")
+        .selectAll("circle")
+        .data([datapoint])
+        .enter().append("circle")
+        .attr("r", 5)
+        .attr("stroke","steelblue")
+        .attr("stroke-width","1.5px")
+        .attr("fill","transparent")
+        .attr("cx", function(d) { return timeSeriesX(d.x); })
+        .attr("cy", function(d) { return timeSeriesY(d.y); })
+        .call(drag);
+}
 
 function drawMap() {
 
@@ -86,7 +194,8 @@ function getDataset() {
          console.log("Done downloading...processing");
         // unprocessedEvents = jQuery.parseJSON(json_string);
          unprocessedEvents = json_string;
-         curDay=0;
+         curDay=startDay;
+         drawTsPlot();
   });
 }
 
@@ -144,9 +253,43 @@ function updatePolygonColors(timeStep) {
         }
     }
 
-    $("#curDayDiv").html("Current Period:" + _startDay + "-" + endDay );
-    $("#infectionsDiv").html("# Infections:" + infection_ct);
+    $("#curDayDiv").html("Current period:" + _startDay + "-" + endDay );
 
+}
+
+
+function calculateTimeSeriesData() { 
+    var data = [];
+    for(i=0; i < unprocessedEvents.length; i++ ) {
+        var curDayPoints = unprocessedEvents[i];
+        var numInf=0;
+        if (curDayPoints != null ) {
+            for(j=0; j<curDayPoints.length; j++) {
+                d = curDayPoints[j];
+                numInf += d[2];
+            }
+        }
+        data[i]=[i,numInf];
+   }   
+   return data;
+}
+
+function updateTimeSeriesIndicator(dayNumber, numberInfected) {
+        timeSeriesIndicator
+            .attr("cx", timeSeriesX(dayNumber))
+            .attr("cy", timeSeriesY(numberInfected));
+
+        $("#infectionsDiv").html("# Infections:" + numberInfected);
+}
+
+function addTimeSeriesPoint(dayNumber, numberInfected) {
+       x = (dayNumber/3750)*1100;
+       y = tsPlotDivHeight * (1 - (numberInfected/1800));
+
+       var point=tsPlotElement.append("circle")
+        .attr("cx", x)
+        .attr("cy", y)
+        .attr("r",1).attr("fill","red");
 }
 
 
@@ -160,6 +303,15 @@ function drawDailyEvents(dayNumber) {
         // draw each infection
         // Draw only cases, which amount to about 1 out of 36 infections
         //for(i=0; i<curDayPoints.length; i++) {
+
+        //addTimeSeriesPoint(dayNumber,curDayPoints.length);
+
+        var numInf=0;
+        for(i=0; i<curDayPoints.length; i++) {
+            numInf += curDayPoints[i][2];
+        }
+        updateTimeSeriesIndicator(dayNumber,numInf);
+
         for(i=0; i<curDayPoints.length; i += expansionFactor) {
             d = curDayPoints[i];
             coords = projection([d[0],d[1]]);
@@ -177,6 +329,7 @@ function drawDailyEvents(dayNumber) {
                 displayedStash.push(element); 
             }
         }
+
     }
 
     var infection_ct = 0;
@@ -186,8 +339,8 @@ function drawDailyEvents(dayNumber) {
 }
 
 function update() { 
-    console.log("Update " + timeStep );
-    if (curDay % timeStep == 0) updatePolygonColors(timeStep);
+    //console.log("Update " + timeStep );
+    if ((curDay-startDay) % timeStep == 0) updatePolygonColors(timeStep);
     drawDailyEvents(curDay);
     curDay++;
     if (curDay > unprocessedEvents.length) curDay = 0;
@@ -205,16 +358,28 @@ function runSimulation() {
     }
 }
 
-function changeStartDay() { startDay=parseInt($("#startDayBox").val()); return startDay; }
-function changeTimeStep() { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
-function changeExpansionFactor() { expansionFactor=parseInt($("#expansionFactorBox").val()); return expansionFactor; }
-function restartSimulation() { curDay=0;}
+function dragstarted(d) {
+    runSimulation();
+    d3.event.sourceEvent.stopPropagation();
+    d3.select(this).classed("dragging", true);
+}
 
+function dragged(d) {
+    console.log(d);
+    var estimateDay = (d.x/width)*3750;
+    $("#startingDayBox").val(Math.round(estimateDay));
+    changeStartDay();
+    d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+}
+
+function dragended(d) {
+    d3.select(this).classed("dragging", false);
+    runSimulation();
+}
 
 drawMap();
 getMuniMetaData();
 getDataset();
-
 
 </script>
 
