@@ -1,5 +1,10 @@
 #!/usr/bin/python
 import json
+from sys import argv, exit
+
+if len(argv) < 2:
+    print "\n\tUsage:\tSummarize_simulator_output_as_json.py csv_file1 [csv_file2 [...]]\n"
+    exit()
 
 pixel_size = 0.00416667
 min_x_center = -90.40409499
@@ -119,6 +124,7 @@ def aggregate_data(pixels, data):
 
     json_data = []
     for day in range(len(agg_data)):
+#        print day, len(agg_data[day].keys())
         json_data.append([])
         for coord in agg_data[day].keys():
             json_data[day].append([coord[0], coord[1], agg_data[day][coord]['cases'], agg_data[day][coord]['muni']])
@@ -126,11 +132,14 @@ def aggregate_data(pixels, data):
 
     return json_data
 
-#epi_data_file = 'prevalence5490.out'
-epi_data_file = 'incidence_5500.csv'
-pixels, data = get_data(epi_data_file)
-json_data = aggregate_data(pixels, data)
-print json.dumps(json_data)
+for epi_data_file in argv[1:]:
+    print "processing:", epi_data_file
+    pixels, data = get_data(epi_data_file)
+    json_data = aggregate_data(pixels, data)
+    output_filename = epi_data_file[:-3] + 'json' # replace csv with json
+    fo = open(output_filename, 'w')
+    fo.write(json.dumps(json_data))
+    fo.close()
 
 #output_data = [{'day':n, 'data':[{'muni':name, 'cases':num},{},{}]}, {}, {} ]
 #output_data = [{'day':n, 'data':[{'x':x_val, 'y':y_val, 'cases':num},{},{}]}, {}, {} ]
