@@ -35,6 +35,22 @@
         Starting day: <input type="number" id="startingDayBox" value="100" min="1" max="365" onChange="changeStartDay()"> 
         Time step: <input type="number" id="timeStepBox" value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
         Expansion Factor: <input type="number" id="expansionFactorBox" value="36" min="1" max="100" onChange="changeExpansionFactor()"> 
+        <select id=dataSetMenu onChange="changeDataSet()">
+          <option value="20_exponential_0.1_incidence.json">20_exponential_0.1</option>
+          <option value="30_exponential_0.1_incidence.json">30_exponential_0.1</option>
+          <option value="40_exponential_0.1_incidence.json">40_exponential_0.1</option>
+          <option value="50_exponential_0.1_incidence.json">50_exponential_0.1</option>
+          <option value="60_exponential_0.1_incidence.json">60_exponential_0.1</option>
+          <option value="70_exponential_0.1_incidence.json">70_exponential_0.1</option>
+          <option value="80_exponential_0.1_incidence.json">80_exponential_0.1</option>
+          <option value="90_exponential_0.1_incidence.json" selected='selected'>90_exponential_0.1</option>
+          <option value="100_exponential_0.1_incidence.json">100_exponential_0.1</option>
+          <option value="110_exponential_0.1_incidence.json">110_exponential_0.1</option>
+          <option value="120_exponential_0.1_incidence.json">120_exponential_0.1</option>
+          <option value="130_exponential_0.1_incidence.json">130_exponential_0.1</option>
+          <option value="140_exponential_0.1_incidence.json">140_exponential_0.1</option>
+          <option value="150_exponential_0.1_incidence.json">150_exponential_0.1</option>
+        </select>
         <span id='curDayDiv'></span>
         <span id='infectionsDiv'></span>
       </div>
@@ -56,6 +72,7 @@ var width             = document.getElementById('svgMapDiv').offsetWidth;
 var height            = 800;
 var timeStep          = changeTimeStep(); // Update polygons this often
 var expansionFactor   = changeExpansionFactor();
+var dataSetFilename   = changeDataSet();
 var startDay          = 0;
 var tsPlotDivHeight   = 150;
 
@@ -77,18 +94,19 @@ var displayedStash=[];
 var updateFunctionTimer=undefined;
 var lastDayLength=1;
 
-function changeStartDay() { startDay=parseInt($("#startingDayBox").val()); curDay=startDay; return startDay; }
-function changeTimeStep() { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
+function changeStartDay()        { startDay=parseInt($("#startingDayBox").val()); curDay=startDay; return startDay; }
+function changeTimeStep()        { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
 function changeExpansionFactor() { expansionFactor=parseInt($("#expansionFactorBox").val()); return expansionFactor; }
-function restartSimulation() { changeStartDay();}
+function changeDataSet()         { dataSet = document.getElementById('dataSetMenu').value; getDataset(dataSet); return dataSet; }
+function restartSimulation()     { changeStartDay();}
 
 startDay = changeStartDay();
 curDay   = startDay;
 
 function drawTsPlot() {
+    tsPlotElement.selectAll('g').remove()
+    tsPlotElement.selectAll('path').remove()
 
-    
-    
     var data = calculateTimeSeriesData();
 
     //for(i=0; i < data.length; i++ ) {
@@ -246,8 +264,8 @@ function drawMap() {
     });
 }
 
-function getDataset() { 
-  $.get("epi_data/simulator_output.json", function(json_string) { 
+function getDataset(dataSetFilename) { 
+  $.get("epi_data/".concat(dataSetFilename), function(json_string) { 
          console.log("Done downloading...processing");
         // unprocessedEvents = jQuery.parseJSON(json_string);
          unprocessedEvents = json_string;
@@ -440,7 +458,7 @@ function dragended(d) {
 
 drawMap();
 getMuniMetaData();
-getDataset();
+//getDataset();
 
 </script>
 
