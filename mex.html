@@ -26,7 +26,7 @@
 <script src="bootstrap/js/bootstrap.min.js"></script>
 
 <nav class="navbar navbar-default" role="navigation">
-  <div class="container-fluid">
+  <div class="container">
     <div class="navbar-header">
       <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
       <div class="btn-group"> 
@@ -62,7 +62,7 @@ var tsPlotDivHeight   = 150;
 var svgMapElement = d3.select("#svgMapDiv").append("svg").attr("width", width).attr("height", height);
 var tsPlotElement = d3.select("#tsPlotDiv").append("svg").attr("width", width).attr("height", tsPlotDivHeight);
 
-var projection = d3.geo.mercator().scale(14500).center([-89.2, 20.8]);
+var projection = d3.geo.mercator().scale(16000*width/1100).center([-88.9, 20.8]);
 var path_projector = d3.geo.path().projection(projection);
 
 var curDay=0;
@@ -99,7 +99,7 @@ function drawTsPlot() {
     //http://bl.ocks.org/mbostock/3883245
     //http://square.github.io/cubism/
 
-    var margin = {top: 20, right: 0, bottom: 20, left: 180};
+    var margin = {top: 20, right: 0, bottom: 20, left: 80};
     timeSeriesX = d3.scale.linear().range([margin.left, width - margin.right]);
     timeSeriesY = d3.scale.linear().range([tsPlotDivHeight - margin.bottom, margin.top]);
 
@@ -147,7 +147,7 @@ function drawTsPlot() {
 
     tsPlotElement.append("g")
         .attr("class", "y axis")
-        .attr("transform", "translate(" + 150 + ",0)")
+        .attr("transform", "translate(" + 50 + ",0)")
         .call(yAxis)
       .append("text")
         .attr("transform", "rotate(-90)")
@@ -190,11 +190,24 @@ function drawTsPlot() {
         .enter().append("rect")
         .attr("stroke","transparent")
         .attr("fill","transparent")
-        .attr("x", function(d) { return timeSeriesX(d.x) - 15; })
+        .attr("x", function(d) { return timeSeriesX(d.x) - 25; })
         .attr("y", 0)
-        .attr("width", 30)
+        .attr("width", 50)
         .attr("height", tsPlotDivHeight)
         .call(drag);
+
+//    tsPlotElement.append("g")
+//        .attr("class", "boundingbox")
+//        .selectAll("rect")
+//        .data([datapoint])
+//        .enter().append("rect")
+//        .attr("stroke", "green")
+//        .attr("fill","transparent")
+//        .attr("x", 0)
+//        .attr("y", 0)
+//        .attr("width", width)
+//        .attr("height", tsPlotDivHeight)
+//        ;
 }
 
 function drawMap() {
@@ -291,7 +304,7 @@ function updatePolygonColors(timeStep) {
             yvalue = intensity_rescale * (yvalue/populationSize)*255;
 
             if (yvalue > 255) { yvalue = 255; }
-            muni_objects[midx].style["fill"] = d3.rgb(255-yvalue,255-yvalue,255);
+            muni_objects[midx].style["fill"] = d3.rgb(255-yvalue*0.8,255-yvalue*0.5,255-yvalue*0.2);
         } else {
             muni_objects[midx].style["fill"] = "white";
         }
@@ -324,7 +337,7 @@ function updateTimeSeriesIndicator(dayNumber, numberInfected) {
             .attr("cy", timeSeriesY(numberInfected));
 
         timeSeriesIndicatorBar
-            .attr("x", timeSeriesX(dayNumber) -15);
+            .attr("x", timeSeriesX(dayNumber) - 25);
 
         $("#infectionsDiv").html("# Infections:" + numberInfected);
 }
@@ -413,10 +426,10 @@ function dragstarted(d) {
 
 function dragged(d) {
     console.log(d);
-    var estimateDay = ((15+d.x)/width)*3750;
+    var estimateDay = ((25+d.x)/width)*3750;
     $("#startingDayBox").val(Math.round(estimateDay));
     changeStartDay();
-    d3.select(this).attr("x", d.x = d3.event.x-15);
+    d3.select(this).attr("x", d.x = d3.event.x-80);
     //d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
 }
 
