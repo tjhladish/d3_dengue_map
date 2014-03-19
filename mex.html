@@ -13,7 +13,6 @@
 .axis path { fill: none; stroke-width: 1px; stroke: #000; }
 .axis line { fill: none; stroke: #000; shape-rendering: crispEdges; }
 .line { fill: none; stroke: steelblue; stroke-width: 1.5px; }
-
 </style>
 </head>
 
@@ -26,36 +25,42 @@
 <script src="bootstrap/js/bootstrap.min.js"></script>
 
 <nav class="navbar navbar-default" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
-      <div class="btn-group"> 
-        <button id='startStopButton' class="btn btn-success" onClick="runSimulation()">Start/Stop</button>
-        <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button> 
-        Starting day: <input type="number" id="startingDayBox" value="100" min="1" max="365" onChange="changeStartDay()"> 
-        Time step: <input type="number" id="timeStepBox" value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
-        Expansion Factor: <input type="number" id="expansionFactorBox" value="36" min="1" max="100" onChange="changeExpansionFactor()"> 
-        <select id=dataSetMenu onChange="changeDataSet()">
-          <option value="20_exponential_0.1_incidence.json">20_exponential_0.1</option>
-          <option value="30_exponential_0.1_incidence.json">30_exponential_0.1</option>
-          <option value="40_exponential_0.1_incidence.json">40_exponential_0.1</option>
-          <option value="50_exponential_0.1_incidence.json">50_exponential_0.1</option>
-          <option value="60_exponential_0.1_incidence.json">60_exponential_0.1</option>
-          <option value="70_exponential_0.1_incidence.json">70_exponential_0.1</option>
-          <option value="80_exponential_0.1_incidence.json">80_exponential_0.1</option>
-          <option value="90_exponential_0.1_incidence.json" selected='selected'>90_exponential_0.1</option>
-          <option value="100_exponential_0.1_incidence.json">100_exponential_0.1</option>
-          <option value="110_exponential_0.1_incidence.json">110_exponential_0.1</option>
-          <option value="120_exponential_0.1_incidence.json">120_exponential_0.1</option>
-          <option value="130_exponential_0.1_incidence.json">130_exponential_0.1</option>
-          <option value="140_exponential_0.1_incidence.json">140_exponential_0.1</option>
-          <option value="150_exponential_0.1_incidence.json">150_exponential_0.1</option>
-        </select>
-        <span id='curDayDiv'></span>
-        <span id='infectionsDiv'></span>
-      </div>
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
+            <div class="btn-group"> 
+                <button id='startStopButton' class="btn btn-success" onClick="runSimulation()">Start/Stop</button>
+                <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button> 
+                &nbsp Starting day: 
+                <input type="number" id="startingDayBox" value="100" min="1" max="365" onChange="changeStartDay()"> 
+                &nbsp Time step: 
+                <input type="number" id="timeStepBox" value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
+                &nbsp Expansion Factor: 
+                <input type="number" id="expansionFactorBox" value="36" min="1" max="100" onChange="changeExpansionFactor()"> 
+                &nbsp Data set: 
+                <select id=dataSetMenu onChange="changeDataSet()">
+                    <option value="20_exponential_0.1_incidence.json">20_exponential_0.1</option>
+                    <option value="30_exponential_0.1_incidence.json">30_exponential_0.1</option>
+                    <option value="40_exponential_0.1_incidence.json">40_exponential_0.1</option>
+                    <option value="50_exponential_0.1_incidence.json">50_exponential_0.1</option>
+                    <option value="60_exponential_0.1_incidence.json">60_exponential_0.1</option>
+                    <option value="70_exponential_0.1_incidence.json">70_exponential_0.1</option>
+                    <option value="80_exponential_0.1_incidence.json">80_exponential_0.1</option>
+                    <option value="90_exponential_0.1_incidence.json" selected='selected'>90_exponential_0.1</option>
+                    <option value="100_exponential_0.1_incidence.json">100_exponential_0.1</option>
+                    <option value="110_exponential_0.1_incidence.json">110_exponential_0.1</option>
+                    <option value="120_exponential_0.1_incidence.json">120_exponential_0.1</option>
+                    <option value="130_exponential_0.1_incidence.json">130_exponential_0.1</option>
+                    <option value="140_exponential_0.1_incidence.json">140_exponential_0.1</option>
+                    <option value="150_exponential_0.1_incidence.json">150_exponential_0.1</option>
+                </select>
+                &nbsp
+                <span id='curDayDiv'></span>
+                &nbsp
+                <span id='infectionsDiv'></span>
+            </div>
+        </div>
     </div>
-  </div>
 </nav>
 
 <div class="container">
@@ -85,8 +90,9 @@ var path_projector = d3.geo.path().projection(projection);
 var curDay=0;
 var timeSeriesX=undefined;
 var timeSeriesY=undefined;
-var timeSeriesIndicator=undefined;
 var timeSeriesIndicatorBar=undefined;
+var timeSeriesIndicatorText=undefined;
+var xAxisSVGElement=undefined;
 
 var unprocessedEvents=[];
 var muniMetaData={};
@@ -101,11 +107,11 @@ function changeDataSet()         { dataSet = document.getElementById('dataSetMen
 function restartSimulation()     { changeStartDay();}
 
 startDay = changeStartDay();
-curDay   = startDay;
 
 function drawTsPlot() {
     tsPlotElement.selectAll('g').remove()
     tsPlotElement.selectAll('path').remove()
+    tsPlotElement.selectAll('text').remove()
 
     var data = calculateTimeSeriesData();
 
@@ -140,6 +146,7 @@ function drawTsPlot() {
                   .tickValues(yTicks)
                   .orient("left");
 
+
     var line = d3.svg.line()
         .x(function(d) { return timeSeriesX(d[0]); })
         .y(function(d) { return timeSeriesY(d[1]); });
@@ -152,7 +159,9 @@ function drawTsPlot() {
 
     
     var xAxisOffset = tsPlotDivHeight - 10;
-    tsPlotElement.append("g")
+
+     tsPlotElement.append("g")
+        .attr("id", "xaxis")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + xAxisOffset + ")")
         .call(xAxis)
@@ -174,7 +183,7 @@ function drawTsPlot() {
         .style("text-anchor", "end")
         .text("Incidence");
 
-
+    
     tsPlotElement.append("path")
         .datum(data)
         .attr("class", "line")
@@ -188,44 +197,29 @@ function drawTsPlot() {
 
     datapoint = {'x':0, 'y':0};
 
-    timeSeriesIndicator = tsPlotElement.append("g")
-        .attr("class", "dot")
-        .selectAll("circle")
-        .data([datapoint])
-        .enter().append("circle")
-        .attr("r", 5)
-        .attr("stroke","steelblue")
-        .attr("stroke-width","1.5px")
-        .attr("fill","transparent")
-        .attr("cx", function(d) { return timeSeriesX(d.x); })
-        .attr("cy", function(d) { return timeSeriesY(d.y); })
-        ;
-
+    var barWidth = 10;
     timeSeriesIndicatorBar = tsPlotElement.append("g")
         .attr("class", "bar")
         .selectAll("rect")
         .data([datapoint])
         .enter().append("rect")
         .attr("stroke","transparent")
-        .attr("fill","transparent")
-        .attr("x", function(d) { return timeSeriesX(d.x) - 25; })
+        .attr("fill", "rgba(255,0,0,.5)")
+        .attr("x", function(d) { return timeSeriesX(d.x) - barWidth/2; })
         .attr("y", 0)
-        .attr("width", 50)
-        .attr("height", tsPlotDivHeight)
+        .attr("width", barWidth)
+        .attr("height", tsPlotDivHeight - margin.bottom + 5)
         .call(drag);
 
-//    tsPlotElement.append("g")
-//        .attr("class", "boundingbox")
-//        .selectAll("rect")
-//        .data([datapoint])
-//        .enter().append("rect")
-//        .attr("stroke", "green")
-//        .attr("fill","transparent")
-//        .attr("x", 0)
-//        .attr("y", 0)
-//        .attr("width", width)
-//        .attr("height", tsPlotDivHeight)
-//        ;
+    timeSeriesIndicatorBarText=tsPlotElement.append("text")
+        .attr("id","timeSeriesIndicatorBarText")
+        .attr("x", 0)
+        .attr("y", 5)
+        .attr("dy", ".71em")
+        .attr("fill", "red")
+        .text("# of infections");
+
+    updateTimeSeriesIndicator(startDay);
 }
 
 function drawMap() {
@@ -349,15 +343,17 @@ function calculateTimeSeriesData() {
    return data;
 }
 
-function updateTimeSeriesIndicator(dayNumber, numberInfected) {
-        timeSeriesIndicator
-            .attr("cx", timeSeriesX(dayNumber))
-            .attr("cy", timeSeriesY(numberInfected));
+function updateTimeSeriesIndicator(dayNumber) {
+    timeSeriesIndicatorBar.attr("x", timeSeriesX(dayNumber));
+    timeSeriesIndicatorBarText.attr("x", timeSeriesX(dayNumber)+20);
+}
 
-        timeSeriesIndicatorBar
-            .attr("x", timeSeriesX(dayNumber) - 25);
-
-        $("#infectionsDiv").html("# Infections:" + numberInfected);
+//http://bl.ocks.org/mbostock/3902569
+function updateTimeSeries(dayNumber, numberInfected) {
+    updateTimeSeriesIndicator(dayNumber);
+    timeSeriesIndicatorBarText.text(numberInfected);
+    //timeSeriesIndicatorBarText.text(dayNumber + " " + numberInfected);
+    $("#infectionsDiv").html("# Infections:" + numberInfected);
 }
 
 //function addTimeSeriesPoint(dayNumber, numberInfected) {
@@ -388,7 +384,7 @@ function drawDailyEvents(dayNumber) {
         for(i=0; i<curDayPoints.length; i++) {
             numInf += curDayPoints[i][2];
         }
-        updateTimeSeriesIndicator(dayNumber,numInf);
+        updateTimeSeries(dayNumber,numInf);
 
         for(i=0; i<curDayPoints.length; i += expansionFactor) {
             d = curDayPoints[i];
@@ -424,36 +420,47 @@ function update() {
     if (curDay > unprocessedEvents.length) curDay = 0;
 }
 
+function stopSimulation() { 
+  if(updateFunctionTimer != undefined) {
+      clearInterval(updateFunctionTimer);
+      updateFunctionTimer = undefined;
+  }
+}
+
+function startSimulation() {
+  if(updateFunctionTimer == undefined) {
+      updateFunctionTimer = setInterval(update,20);  //r
+  }
+}
+
 function runSimulation() { 
     if(updateFunctionTimer == undefined) {
-        console.log("Starting simulation");
-       // update();  //for debuging 
-         updateFunctionTimer = setInterval(update,20);  //r
+         startSimulation();
     } else {
-        console.log("Stopping simulation");
-        clearInterval(updateFunctionTimer);
-        updateFunctionTimer=undefined;
+        stopSimulation();
     }
 }
 
 function dragstarted(d) {
-    runSimulation();
+    stopSimulation();
     d3.event.sourceEvent.stopPropagation();
     d3.select(this).classed("dragging", true);
 }
 
 function dragged(d) {
     console.log(d);
-    var estimateDay = ((25+d.x)/width)*3750;
+    var bbox = document.getElementById('xaxis').getBoundingClientRect();
+    var estimateDay = ((d.x-80+5)/(bbox.width-5))*3750;
+    estimateDay = estimateDay < 0 ? 0 : estimateDay;
     $("#startingDayBox").val(Math.round(estimateDay));
     changeStartDay();
-    d3.select(this).attr("x", d.x = d3.event.x-80);
-    //d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+    update();
+    timeSeriesIndicatorBar.attr("x", d.x = d3.event.x-5);
 }
 
 function dragended(d) {
     d3.select(this).classed("dragging", false);
-    runSimulation();
+//    startSimulation();
 }
 
 drawMap();
