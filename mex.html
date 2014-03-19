@@ -455,7 +455,12 @@ function dragged(d) {
     $("#startingDayBox").val(Math.round(estimateDay));
     changeStartDay();
     update();
-    timeSeriesIndicatorBar.attr("x", d.x = d3.event.x-5);
+    var barPos = d3.event.x - 5;
+    barPos = barPos < 75 ? 75 : 
+             barPos > bbox.width + 70 ? bbox.width + 70 :
+             barPos;
+    console.log(barPos);
+    timeSeriesIndicatorBar.attr("x", d.x = barPos);
 }
 
 function dragended(d) {
