@@ -39,19 +39,33 @@
                 <input type="number" id="expansionFactorBox" value="36" min="1" max="100" onChange="changeExpansionFactor()"> 
                 &nbsp Data set: 
                 <select id=dataSetMenu onChange="changeDataSet()">
+                    <option value="20_exponential_0.05_incidence.json">20_exponential_0.05</option>
                     <option value="20_exponential_0.1_incidence.json">20_exponential_0.1</option>
+                    <option value="30_exponential_0.05_incidence.json">30_exponential_0.05</option>
                     <option value="30_exponential_0.1_incidence.json">30_exponential_0.1</option>
+                    <option value="40_exponential_0.05_incidence.json">40_exponential_0.05</option>
                     <option value="40_exponential_0.1_incidence.json">40_exponential_0.1</option>
+                    <option value="50_exponential_0.05_incidence.json">50_exponential_0.05</option>
                     <option value="50_exponential_0.1_incidence.json">50_exponential_0.1</option>
+                    <option value="60_exponential_0.05_incidence.json">60_exponential_0.05</option>
                     <option value="60_exponential_0.1_incidence.json">60_exponential_0.1</option>
+                    <option value="70_exponential_0.05_incidence.json">70_exponential_0.05</option>
                     <option value="70_exponential_0.1_incidence.json">70_exponential_0.1</option>
+                    <option value="80_exponential_0.05_incidence.json">80_exponential_0.05</option>
                     <option value="80_exponential_0.1_incidence.json">80_exponential_0.1</option>
-                    <option value="90_exponential_0.1_incidence.json" selected='selected'>90_exponential_0.1</option>
+                    <option value="90_exponential_0.05_incidence.json" selected='selected'>90_exponential_0.05</option>
+                    <option value="90_exponential_0.1_incidence.json">90_exponential_0.1</option>
+                    <option value="100_exponential_0.05_incidence.json">100_exponential_0.05</option>
                     <option value="100_exponential_0.1_incidence.json">100_exponential_0.1</option>
+                    <option value="110_exponential_0.05_incidence.json">110_exponential_0.05</option>
                     <option value="110_exponential_0.1_incidence.json">110_exponential_0.1</option>
+                    <option value="120_exponential_0.05_incidence.json">120_exponential_0.05</option>
                     <option value="120_exponential_0.1_incidence.json">120_exponential_0.1</option>
+                    <option value="130_exponential_0.05_incidence.json">130_exponential_0.05</option>
                     <option value="130_exponential_0.1_incidence.json">130_exponential_0.1</option>
+                    <option value="140_exponential_0.05_incidence.json">140_exponential_0.05</option>
                     <option value="140_exponential_0.1_incidence.json">140_exponential_0.1</option>
+                    <option value="150_exponential_0.05_incidence.json">150_exponential_0.05</option>
                     <option value="150_exponential_0.1_incidence.json">150_exponential_0.1</option>
                 </select>
                 &nbsp
@@ -429,7 +443,7 @@ function stopSimulation() {
 
 function startSimulation() {
   if(updateFunctionTimer == undefined) {
-      updateFunctionTimer = setInterval(update,20);  //r
+      updateFunctionTimer = setInterval(update,10);  //r
   }
 }
 
