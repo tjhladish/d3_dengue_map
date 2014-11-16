@@ -28,57 +28,48 @@
     <div class="container">
         <div class="navbar-header">
             <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
-            <div class="btn-group"> 
-                <button id='startStopButton' class="btn btn-success" onClick="runSimulation()">Start/Stop</button>
-                <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button> 
-                &nbsp Starting day: 
-                <input type="number" id="startingDayBox" value="100" min="1" max="365" onChange="changeStartDay()"> 
-                &nbsp Time step: 
-                <input type="number" id="timeStepBox" value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
-                &nbsp Expansion Factor: 
-                <input type="number" id="expansionFactorBox" value="36" min="1" max="100" onChange="changeExpansionFactor()"> 
-                &nbsp Data set: 
-                <select id=dataSetMenu onChange="changeDataSet()">
-                    <option value="20_exponential_0.05_incidence.json">20_exponential_0.05</option>
-                    <option value="20_exponential_0.1_incidence.json">20_exponential_0.1</option>
-                    <option value="30_exponential_0.05_incidence.json">30_exponential_0.05</option>
-                    <option value="30_exponential_0.1_incidence.json">30_exponential_0.1</option>
-                    <option value="40_exponential_0.05_incidence.json">40_exponential_0.05</option>
-                    <option value="40_exponential_0.1_incidence.json">40_exponential_0.1</option>
-                    <option value="50_exponential_0.05_incidence.json">50_exponential_0.05</option>
-                    <option value="50_exponential_0.1_incidence.json">50_exponential_0.1</option>
-                    <option value="60_exponential_0.05_incidence.json">60_exponential_0.05</option>
-                    <option value="60_exponential_0.1_incidence.json">60_exponential_0.1</option>
-                    <option value="70_exponential_0.05_incidence.json">70_exponential_0.05</option>
-                    <option value="70_exponential_0.1_incidence.json">70_exponential_0.1</option>
-                    <option value="80_exponential_0.05_incidence.json">80_exponential_0.05</option>
-                    <option value="80_exponential_0.1_incidence.json">80_exponential_0.1</option>
-                    <option value="90_exponential_0.05_incidence.json" selected='selected'>90_exponential_0.05</option>
-                    <option value="90_exponential_0.1_incidence.json">90_exponential_0.1</option>
-                    <option value="100_exponential_0.05_incidence.json">100_exponential_0.05</option>
-                    <option value="100_exponential_0.1_incidence.json">100_exponential_0.1</option>
-                    <option value="110_exponential_0.05_incidence.json">110_exponential_0.05</option>
-                    <option value="110_exponential_0.1_incidence.json">110_exponential_0.1</option>
-                    <option value="120_exponential_0.05_incidence.json">120_exponential_0.05</option>
-                    <option value="120_exponential_0.1_incidence.json">120_exponential_0.1</option>
-                    <option value="130_exponential_0.05_incidence.json">130_exponential_0.05</option>
-                    <option value="130_exponential_0.1_incidence.json">130_exponential_0.1</option>
-                    <option value="140_exponential_0.05_incidence.json">140_exponential_0.05</option>
-                    <option value="140_exponential_0.1_incidence.json">140_exponential_0.1</option>
-                    <option value="150_exponential_0.05_incidence.json">150_exponential_0.05</option>
-                    <option value="150_exponential_0.1_incidence.json">150_exponential_0.1</option>
-                </select>
-                &nbsp
-                <span id='curDayDiv'></span>
-                &nbsp
-                <span id='infectionsDiv'></span>
-            </div>
         </div>
     </div>
 </nav>
 
+
 <div class="container">
-  <div class="col-md-12"> 
+    <div class="col-md-2"> 
+                <button id='startStopButton' class="btn btn-success btn-block" onClick="runSimulation()">Start/Stop</button> 
+
+                <button  id='restart' class="btn btn-primary btn-block" onClick="restartSimulation()">Restart</button> 
+
+                <label> Starting day:  </label>
+                <input type="number" id="startingDayBox" class="form-control"  value="100" min="1" max="365" onChange="changeStartDay()"> 
+                <label>  Time step:  </label>
+                <input type="number" id="timeStepBox" class="form-control"  value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
+                <label> Expansion Factor: </label> <input type="number" id="expansionFactorBox" class="form-control" value="36" min="1" max="100" onChange="changeExpansionFactor()">
+
+                <label> Data set: </label>
+                <select id=dataSetMenu onChange="changeDataSet()" class="form-control" >
+                <option value="chik_70_0.01_incidence.json">     chik_70_0.01</option>
+                <option value="chik_70_0.1_incidence.json">      chik_70_0.1</option>
+                <option value="chik_70_1.0_incidence.json">      chik_70_1.0</option>
+                <option value="chik_100_0.01_incidence.json">    chik_100_0.01</option>
+                <option value="chik_100_0.1_incidence.json">     chik_100_0.1</option>
+                <option value="chik_100_1.0_incidence.json">     chik_100_1.0</option>
+                <option value="chik_130_0.01_incidence.json">    chik_130_0.01</option>
+                <option value="chik_130_0.1_incidence.json">     chik_130_0.1</option>
+                <option value="chik_130_1.0_incidence.json">     chik_130_1.0</option>
+                <option value="dengue_70_0.01_incidence.json">   dengue_70_0.01   </option>
+                <option value="dengue_70_0.1_incidence.json" selected='selected'>    dengue_70_0.1</option>
+                <option value="dengue_70_1.0_incidence.json">    dengue_70_1.0  </option>
+                <option value="dengue_100_0.01_incidence.json">  dengue_100_0.01   </option>
+                <option value="dengue_100_0.1_incidence.json">   dengue_100_0.1   </option>
+                <option value="dengue_100_1.0_incidence.json">   dengue_100_1.0   </option>
+                <option value="dengue_130_0.01_incidence.json">  dengue_130_0.01   </option>
+                <option value="dengue_130_0.1_incidence.json">   dengue_130_0.1   </option>
+                <option value="dengue_130_1.0_incidence.json">   dengue_130_1.0   </option>
+                </select>
+      </div>
+ 
+  <div class="col-md-10"> 
+    <span id='curDayDiv' class='pull-right'>&nbsp</span>
     <div id='tsPlotDiv'> </div>
     <div id='svgMapDiv'> </div>
   </div>
@@ -336,7 +327,7 @@ function updatePolygonColors(timeStep) {
         }
     }
 
-    $("#curDayDiv").html("Current period:" + _startDay + "-" + endDay );
+    $("#curDayDiv").html("Current period: " + _startDay + "-" + endDay );
 
 }
 
