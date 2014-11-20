@@ -12,7 +12,8 @@
 
 .axis path { fill: none; stroke-width: 1px; stroke: #000; }
 .axis line { fill: none; stroke: #000; shape-rendering: crispEdges; }
-.line { fill: none; stroke: steelblue; stroke-width: 1.5px; }
+.line_base { fill: none; stroke: rgb(230, 127, 51); stroke-width: 1.5px; }
+.line_vac { fill: none; stroke: rgb(51, 127, 204); stroke-width: 1.5px; }
 </style>
 </head>
 
@@ -28,68 +29,75 @@
     <div class="container">
         <div class="navbar-header">
             <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
+                <div class='form-inline'>
+               <button id='startStopButton' class="btn btn-success" onClick="runSimulation()">Start/Stop</button> 
+                <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button> 
+                </div>
         </div>
     </div>
 </nav>
 
 
 <div class="container">
-    <div class="col-md-2"> 
-                <button id='startStopButton' class="btn btn-success btn-block" onClick="runSimulation()">Start/Stop</button> 
-
-                <button  id='restart' class="btn btn-primary btn-block" onClick="restartSimulation()">Restart</button> 
-
+    <div class="col-md-12 form-inline"> 
+            <div class='form-group'>
+                <div class='row'>
                 <label> Starting day:  </label>
-                <input type="number" id="startingDayBox" class="form-control"  value="100" min="1" max="365" onChange="changeStartDay()"> 
+                <input class='input-sm' type="number" id="startingDayBox" class="form-control"  value="100" min="1" max="365" onChange="changeStartDay()"> 
                 <label>  Time step:  </label>
-                <input type="number" id="timeStepBox" class="form-control"  value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
-                <label> Expansion Factor: </label> <input type="number" id="expansionFactorBox" class="form-control" value="36" min="1" max="100" onChange="changeExpansionFactor()">
+                <input class='input-sm' type="number" id="timeStepBox" class="form-control"  value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
+                <label> Expansion Factor: </label> 
+                <input class='input-sm' type="number" id="expansionFactorBox" class="form-control" value="36" min="1" max="100" onChange="changeExpansionFactor()">
 
                 <label> Data set: </label>
                 <select id=dataSetMenu onChange="changeDataSet()" class="form-control" >
-                <option value="chik_70_0.01_incidence.json">     chik_70_0.01</option>
-                <option value="chik_70_0.1_incidence.json">      chik_70_0.1</option>
-                <option value="chik_70_1.0_incidence.json">      chik_70_1.0</option>
-                <option value="chik_100_0.01_incidence.json">    chik_100_0.01</option>
-                <option value="chik_100_0.1_incidence.json">     chik_100_0.1</option>
-                <option value="chik_100_1.0_incidence.json">     chik_100_1.0</option>
-                <option value="chik_130_0.01_incidence.json">    chik_130_0.01</option>
-                <option value="chik_130_0.1_incidence.json">     chik_130_0.1</option>
-                <option value="chik_130_1.0_incidence.json">     chik_130_1.0</option>
-                <option value="dengue_70_0.01_incidence.json">   dengue_70_0.01   </option>
-                <option value="dengue_70_0.1_incidence.json" selected='selected'>    dengue_70_0.1</option>
-                <option value="dengue_70_1.0_incidence.json">    dengue_70_1.0  </option>
-                <option value="dengue_100_0.01_incidence.json">  dengue_100_0.01   </option>
-                <option value="dengue_100_0.1_incidence.json">   dengue_100_0.1   </option>
-                <option value="dengue_100_1.0_incidence.json">   dengue_100_1.0   </option>
-                <option value="dengue_130_0.01_incidence.json">  dengue_130_0.01   </option>
-                <option value="dengue_130_0.1_incidence.json">   dengue_130_0.1   </option>
-                <option value="dengue_130_1.0_incidence.json">   dengue_130_1.0   </option>
+                <option value="dengue" selected='selected'>   comparison   </option>
+                <option value="dengue_70_0.01_incidence">   dengue_70_0.01   </option>
+                <option value="dengue_70_0.1_incidence">    dengue_70_0.1</option>
+                <option value="dengue_70_1.0_incidence">    dengue_70_1.0  </option>
+                <option value="dengue_100_0.01_incidence">  dengue_100_0.01   </option>
+                <option value="dengue_100_0.1_incidence">   dengue_100_0.1   </option>
+                <option value="dengue_100_1.0_incidence">   dengue_100_1.0   </option>
+                <option value="dengue_130_0.01_incidence">  dengue_130_0.01   </option>
+                <option value="dengue_130_0.1_incidence">   dengue_130_0.1   </option>
+                <option value="dengue_130_1.0_incidence">   dengue_130_1.0   </option>
                 </select>
+           </div>
       </div>
+</div>
  
-  <div class="col-md-10"> 
+<div class='container'>
+  <div class="col-md-12"> 
     <span id='curDayDiv' class='pull-right'>&nbsp</span>
     <div id='tsPlotDiv'> </div>
-    <div id='svgMapDiv'> </div>
+  </div>
+</div>
+
+<div class='container'>
+  <div class="col-md-12"> 
+    <div class="col-md-6" id='svgMapDiv1'> </div>
+    <div class="col-md-6" id='svgMapDiv2'> </div>
   </div>
 </div>
 
 <script>
 
 
-var width             = document.getElementById('svgMapDiv').offsetWidth;
-var height            = 800;
+var width             = 1000;
+var mapwidth          = 500;
+var height            = 500;
 var timeStep          = changeTimeStep(); // Update polygons this often
 var expansionFactor   = changeExpansionFactor();
 var dataSetFilename   = changeDataSet();
 var startDay          = 0;
 var tsPlotDivHeight   = 150;
 
-var svgMapElement = d3.select("#svgMapDiv").append("svg").attr("width", width).attr("height", height);
-var tsPlotElement = d3.select("#tsPlotDiv").append("svg").attr("width", width).attr("height", tsPlotDivHeight);
+var svgMapElement1 = d3.select("#svgMapDiv1").append("svg").attr("width", mapwidth).attr("height", height);
+var svgMapElement2 = d3.select("#svgMapDiv2").append("svg").attr("width", mapwidth).attr("height", height);
 
-var projection = d3.geo.mercator().scale(16000*width/1100).center([-88.9, 20.8]);
+
+//var projection = d3.geo.mercator().scale(16000*mapwidth/1100).center([-88.9, 20.8]);
+var projection = d3.geo.mercator().scale(18*mapwidth).center([-87.5, 20.4]);
 var path_projector = d3.geo.path().projection(projection);
 
 var curDay=0;
@@ -99,7 +107,8 @@ var timeSeriesIndicatorBar=undefined;
 var timeSeriesIndicatorText=undefined;
 var xAxisSVGElement=undefined;
 
-var unprocessedEvents=[];
+var unprocessedEvents1=[];
+var unprocessedEvents2=[];
 var muniMetaData={};
 var displayedStash=[];
 var updateFunctionTimer=undefined;
@@ -108,17 +117,26 @@ var lastDayLength=1;
 function changeStartDay()        { startDay=parseInt($("#startingDayBox").val()); curDay=startDay; return startDay; }
 function changeTimeStep()        { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
 function changeExpansionFactor() { expansionFactor=parseInt($("#expansionFactorBox").val()); return expansionFactor; }
-function changeDataSet()         { dataSet = document.getElementById('dataSetMenu').value; getDataset(dataSet); return dataSet; }
+
+function changeDataSet()         { dataSet = document.getElementById('dataSetMenu').value; 
+                                   getDataset1(dataSet+"_base.json"); 
+                                   getDataset2(dataSet+"_vac.json"); 
+                                   return dataSet; 
+                                   }
 function restartSimulation()     { changeStartDay();}
 
 startDay = changeStartDay();
 
 function drawTsPlot() {
+    if (unprocessedEvents1.length == 0  || unprocessedEvents2.length==0) return;
+
+    var tsPlotElement = d3.select("#tsPlotDiv").append("svg").attr("width", width).attr("height", tsPlotDivHeight);
     tsPlotElement.selectAll('g').remove()
     tsPlotElement.selectAll('path').remove()
     tsPlotElement.selectAll('text').remove()
 
-    var data = calculateTimeSeriesData();
+    var data1 = calculateTimeSeriesData(unprocessedEvents1);
+    var data2 = calculateTimeSeriesData(unprocessedEvents2);
 
     //for(i=0; i < data.length; i++ ) {
     //   addTimeSeriesPoint(data[i][0],data[i][1]);
@@ -132,11 +150,16 @@ function drawTsPlot() {
     timeSeriesX = d3.scale.linear().range([margin.left, width - margin.right]);
     timeSeriesY = d3.scale.linear().range([tsPlotDivHeight - margin.bottom, margin.top]);
 
-    var xDomain = d3.extent(data, function(d) { return d[0]; });
+    var xDomain = d3.extent(data1, function(d) { return d[0]; });
     console.log(xDomain);
     timeSeriesX.domain(xDomain);
-    var yDomain = d3.extent(data, function(d) { return d[1]; });
-    yDomain[0] = 0; //-0.1 * yDomain[1]; // This makes it possible to draw a circle that's not cropped
+    var yDomain1 = d3.extent(data1, function(d) { return d[1]; });
+    var yDomain2 = d3.extent(data2, function(d) { return d[1]; });
+    console.log(yDomain1);
+    console.log(yDomain2);
+  
+    var yDomain = [0,Math.max(yDomain1[1], yDomain2[1])];
+    //yDomain[0] = 0; //-0.1 * yDomain[1]; // This makes it possible to draw a circle that's not cropped
     timeSeriesY.domain(yDomain);
 
 
@@ -190,8 +213,13 @@ function drawTsPlot() {
 
     
     tsPlotElement.append("path")
-        .datum(data)
-        .attr("class", "line")
+        .datum(data1)
+        .attr("class", "line_base")
+        .attr("d", line);
+
+    tsPlotElement.append("path")
+        .datum(data2)
+        .attr("class", "line_vac")
         .attr("d", line);
 
     var drag = d3.behavior.drag()
@@ -227,14 +255,14 @@ function drawTsPlot() {
     updateTimeSeriesIndicator(startDay);
 }
 
-function drawMap() {
+function drawMap(svgMapObject) {
 
     var   graticule = d3.geo.graticule();
           graticule.precision(0.001);
           graticule.extent([[-89.5,20.5],[-88.5,21.5]]);
 
     d3.json("yuc_muni2.json", function(error, mx) {
-      svgMapElement.selectAll("path")
+      svgMapObject.selectAll("path")
         .data(topojson.object(mx, mx.objects.yucatan_municipalities).geometries)
         .enter().append("path")
         .attr("d", path_projector)
@@ -246,7 +274,7 @@ function drawMap() {
        // .style("fill", "transparent");
        // .attr("class", function(){  myclass="myyuc q" + (Math.round(Math.random()*100) % 10); return myclass; }); 
 
-     var g = svgMapElement.append("g");
+     var g = svgMapObject.append("g");
       
       g.selectAll("path")
         .data(topojson.object(mx, mx.objects.MEX_adm1).geometries)
@@ -255,7 +283,7 @@ function drawMap() {
         .attr("fill", "transparent")
         .style("stroke", "#333");
 
-       svgMapElement.append("path")
+       svgMapObject.append("path")
        .datum(graticule)
        .attr("class", "graticule")
        .attr("d", path_projector);
@@ -263,11 +291,19 @@ function drawMap() {
     });
 }
 
-function getDataset(dataSetFilename) { 
+function getDataset1(dataSetFilename) { 
   $.get("epi_data/".concat(dataSetFilename), function(json_string) { 
-         console.log("Done downloading...processing");
-        // unprocessedEvents = jQuery.parseJSON(json_string);
-         unprocessedEvents = json_string;
+         console.log("Done downloading1...processing");
+         unprocessedEvents1 = json_string;
+         curDay=startDay;
+         drawTsPlot();
+  });
+}
+
+function getDataset2(dataSetFilename) { 
+  $.get("epi_data/".concat(dataSetFilename), function(json_string) { 
+         console.log("Done downloading2...processing");
+         unprocessedEvents2 = json_string;
          curDay=startDay;
          drawTsPlot();
   });
@@ -287,7 +323,7 @@ function getColor(value) {
     return d3.hsl(360.0, 100,0.5); //h,s,l red
 }
 
-function updatePolygonColors(timeStep) {
+function updatePolygonColors(timeStep, unprocessedEvents, svgMapObject, position) {
     //muniColorLookup
     var muni_prevalence={};
     var infection_ct=0;
@@ -311,7 +347,7 @@ function updatePolygonColors(timeStep) {
     }
         
     //color municipalities by incidence
-    muni_objects=svgMapElement.selectAll(".myyuc")[0];        //array of arrays..first element 
+    muni_objects=svgMapObject.selectAll(".myyuc")[0];        //array of arrays..first element 
     for(midx=0; midx<muni_objects.length; midx++ ) { //106
         if(midx in muni_prevalence) {
             yvalue=muni_prevalence[midx];
@@ -321,7 +357,11 @@ function updatePolygonColors(timeStep) {
             yvalue = intensity_rescale * (yvalue/populationSize)*255;
 
             if (yvalue > 255) { yvalue = 255; }
-            muni_objects[midx].style["fill"] = d3.rgb(255-yvalue*0.8,255-yvalue*0.5,255-yvalue*0.2);
+            if (position == "left") {
+                muni_objects[midx].style["fill"] = d3.rgb(255-yvalue*0.1, 255-yvalue*0.5, 255-yvalue*0.8);
+            } else {
+                muni_objects[midx].style["fill"] = d3.rgb(255-yvalue*0.8,255-yvalue*0.5,255-yvalue*0.2);
+            }
         } else {
             muni_objects[midx].style["fill"] = "white";
         }
@@ -332,7 +372,7 @@ function updatePolygonColors(timeStep) {
 }
 
 
-function calculateTimeSeriesData() { 
+function calculateTimeSeriesData(unprocessedEvents) { 
     var data = [];
     for(i=0; i < unprocessedEvents.length; i++ ) {
         var curDayPoints = unprocessedEvents[i];
@@ -361,18 +401,8 @@ function updateTimeSeries(dayNumber, numberInfected) {
     $("#infectionsDiv").html("# Infections:" + numberInfected);
 }
 
-//function addTimeSeriesPoint(dayNumber, numberInfected) {
-//       x = (dayNumber/3750)*1100;
-//       y = tsPlotDivHeight * (1 - (numberInfected/1800));
-//
-//       var point=tsPlotElement.append("circle")
-//        .attr("cx", x)
-//        .attr("cy", y)
-//        .attr("r",1).attr("fill","red");
-//}
 
-
-function drawDailyEvents(dayNumber) {
+function drawDailyEvents(dayNumber,unprocessedEvents) {
 
     //clear previous infections
     for(i=0;i<displayedStash.length; i++) { displayedStash[i].style("display", "none"); }   //hide
@@ -381,8 +411,6 @@ function drawDailyEvents(dayNumber) {
     if (curDayPoints != null ) {
         // draw each infection
         // Draw only cases, which amount to about 1 out of 36 infections
-        //for(i=0; i<curDayPoints.length; i++) {
-
         //addTimeSeriesPoint(dayNumber,curDayPoints.length);
 
         var numInf=0;
@@ -390,25 +418,6 @@ function drawDailyEvents(dayNumber) {
             numInf += curDayPoints[i][2];
         }
         updateTimeSeries(dayNumber,numInf);
-
-        for(i=0; i<curDayPoints.length; i += expansionFactor) {
-            d = curDayPoints[i];
-            coords = projection([d[0],d[1]]);
-            cx = coords[0];
-            cy = coords[1];
-            color = getColor(d[2]);
-            muni =  d[3];
-
-            if( i<displayedStash.length) {
-                element = displayedStash[i];
-                element.style("display","block");
-                element.attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill",color);
-            } else {
-                var element=svgMapElement.append("circle").attr("cx", cx).attr("cy",cy).attr("r",1).attr("fill",color);
-                displayedStash.push(element); 
-            }
-        }
-
     }
 
     var infection_ct = 0;
@@ -419,10 +428,15 @@ function drawDailyEvents(dayNumber) {
 
 function update() { 
     //console.log("Update " + timeStep );
-    if ((curDay-startDay) % timeStep == 0) updatePolygonColors(timeStep);
-    drawDailyEvents(curDay);
+    if ((curDay-startDay) % timeStep == 0){
+        updatePolygonColors(timeStep,unprocessedEvents1,svgMapElement1, "left");
+        updatePolygonColors(timeStep,unprocessedEvents2,svgMapElement2, "right");
+    }
+
+    drawDailyEvents(curDay,unprocessedEvents1);
+
     curDay++;
-    if (curDay > unprocessedEvents.length) curDay = 0;
+    if (curDay > unprocessedEvents1.length) curDay = 0;
 }
 
 function stopSimulation() { 
@@ -434,7 +448,7 @@ function stopSimulation() {
 
 function startSimulation() {
   if(updateFunctionTimer == undefined) {
-      updateFunctionTimer = setInterval(update,10);  //r
+      updateFunctionTimer = setInterval(update,50);  //r
   }
 }
 
@@ -473,9 +487,9 @@ function dragended(d) {
 //    startSimulation();
 }
 
-drawMap();
+drawMap(svgMapElement1);
+drawMap(svgMapElement2);
 getMuniMetaData();
-//getDataset();
 
 </script>
 
