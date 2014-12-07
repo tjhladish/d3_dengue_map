@@ -12,8 +12,8 @@
 
 .axis path { fill: none; stroke-width: 1px; stroke: #000; }
 .axis line { fill: none; stroke: #000; shape-rendering: crispEdges; }
-.line_base { fill: none; stroke: rgb(230, 127, 51); stroke-width: 1.5px; }
-.line_vac { fill: none; stroke: rgb(51, 127, 204); stroke-width: 1.5px; }
+.line_base { fill: none; stroke: rgb(230, 127, 51); }
+.line_vac { fill: none; stroke: rgb(51, 127, 204); }
 </style>
 </head>
 
@@ -46,21 +46,10 @@
                 <input class='input-sm' type="number" id="startingDayBox" class="form-control"  value="100" min="1" max="365" onChange="changeStartDay()"> 
                 <label>  Time step:  </label>
                 <input class='input-sm' type="number" id="timeStepBox" class="form-control"  value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
-                <label> Expansion Factor: </label> 
-                <input class='input-sm' type="number" id="expansionFactorBox" class="form-control" value="36" min="1" max="100" onChange="changeExpansionFactor()">
-
                 <label> Data set: </label>
                 <select id=dataSetMenu onChange="changeDataSet()" class="form-control" >
-                <option value="dengue" selected='selected'>   comparison   </option>
-                <option value="dengue_70_0.01_incidence">   dengue_70_0.01   </option>
-                <option value="dengue_70_0.1_incidence">    dengue_70_0.1</option>
-                <option value="dengue_70_1.0_incidence">    dengue_70_1.0  </option>
-                <option value="dengue_100_0.01_incidence">  dengue_100_0.01   </option>
-                <option value="dengue_100_0.1_incidence">   dengue_100_0.1   </option>
-                <option value="dengue_100_1.0_incidence">   dengue_100_1.0   </option>
-                <option value="dengue_130_0.01_incidence">  dengue_130_0.01   </option>
-                <option value="dengue_130_0.1_incidence">   dengue_130_0.1   </option>
-                <option value="dengue_130_1.0_incidence">   dengue_130_1.0   </option>
+                <option value="mfoi" selected='selected'>   Medium FOI  </option> 
+                <!-- <option value="empty" selected='selected'>   Empty  </option> -->
                 </select>
            </div>
       </div>
@@ -87,14 +76,12 @@ var width             = 1000;
 var mapwidth          = 500;
 var height            = 500;
 var timeStep          = changeTimeStep(); // Update polygons this often
-var expansionFactor   = changeExpansionFactor();
 var dataSetFilename   = changeDataSet();
 var startDay          = 0;
 var tsPlotDivHeight   = 150;
 
 var svgMapElement1 = d3.select("#svgMapDiv1").append("svg").attr("width", mapwidth).attr("height", height);
 var svgMapElement2 = d3.select("#svgMapDiv2").append("svg").attr("width", mapwidth).attr("height", height);
-
 
 //var projection = d3.geo.mercator().scale(16000*mapwidth/1100).center([-88.9, 20.8]);
 var projection = d3.geo.mercator().scale(18*mapwidth).center([-87.5, 20.4]);
@@ -110,14 +97,11 @@ var xAxisSVGElement=undefined;
 var unprocessedEvents1=[];
 var unprocessedEvents2=[];
 var muniMetaData={};
-var displayedStash=[];
 var updateFunctionTimer=undefined;
 var lastDayLength=1;
 
 function changeStartDay()        { startDay=parseInt($("#startingDayBox").val()); curDay=startDay; return startDay; }
 function changeTimeStep()        { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
-function changeExpansionFactor() { expansionFactor=parseInt($("#expansionFactorBox").val()); return expansionFactor; }
-
 function changeDataSet()         { dataSet = document.getElementById('dataSetMenu').value; 
                                    getDataset1(dataSet+"_base.json"); 
                                    getDataset2(dataSet+"_vac.json"); 
@@ -138,10 +122,6 @@ function drawTsPlot() {
     var data1 = calculateTimeSeriesData(unprocessedEvents1);
     var data2 = calculateTimeSeriesData(unprocessedEvents2);
 
-    //for(i=0; i < data.length; i++ ) {
-    //   addTimeSeriesPoint(data[i][0],data[i][1]);
-    //}
-
     //http://www.janwillemtulp.com/2011/04/01/tutorial-line-chart-in-d3/
     //http://bl.ocks.org/mbostock/3883245
     //http://square.github.io/cubism/
@@ -151,12 +131,12 @@ function drawTsPlot() {
     timeSeriesY = d3.scale.linear().range([tsPlotDivHeight - margin.bottom, margin.top]);
 
     var xDomain = d3.extent(data1, function(d) { return d[0]; });
-    console.log(xDomain);
+    //console.log(xDomain);
     timeSeriesX.domain(xDomain);
     var yDomain1 = d3.extent(data1, function(d) { return d[1]; });
     var yDomain2 = d3.extent(data2, function(d) { return d[1]; });
-    console.log(yDomain1);
-    console.log(yDomain2);
+    //console.log(yDomain1);
+    //console.log(yDomain2);
   
     var yDomain = [0,Math.max(yDomain1[1], yDomain2[1])];
     //yDomain[0] = 0; //-0.1 * yDomain[1]; // This makes it possible to draw a circle that's not cropped
@@ -185,7 +165,6 @@ function drawTsPlot() {
       .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    
     var xAxisOffset = tsPlotDivHeight - 10;
 
      tsPlotElement.append("g")
@@ -211,7 +190,6 @@ function drawTsPlot() {
         .style("text-anchor", "end")
         .text("Incidence");
 
-    
     tsPlotElement.append("path")
         .datum(data1)
         .attr("class", "line_base")
@@ -226,11 +204,12 @@ function drawTsPlot() {
         .on("dragstart", dragstarted)
         .on("drag", dragged)
         .on("dragend", dragended);
-// http://square.github.io/cubism/demo/
+    // http://square.github.io/cubism/demo/
 
     datapoint = {'x':0, 'y':0};
 
     var barWidth = 10;
+    
     timeSeriesIndicatorBar = tsPlotElement.append("g")
         .attr("class", "bar")
         .selectAll("rect")
@@ -238,7 +217,8 @@ function drawTsPlot() {
         .enter().append("rect")
         .attr("stroke","transparent")
         .attr("fill", "rgba(255,0,0,.5)")
-        .attr("x", function(d) { return timeSeriesX(d.x) - barWidth/2; })
+        .attr("x", 0 )
+        //.attr("x", function(d) { return timeSeriesX(d.x) - barWidth/2; })
         .attr("y", 0)
         .attr("width", barWidth)
         .attr("height", tsPlotDivHeight - margin.bottom + 5)
@@ -249,17 +229,16 @@ function drawTsPlot() {
         .attr("x", 0)
         .attr("y", 5)
         .attr("dy", ".71em")
-        .attr("fill", "red")
-        .text("# of infections");
+        .attr("fill", "red");
 
-    updateTimeSeriesIndicator(startDay);
+    updateTimeSeriesIndicator(startDay,"# of infections");
 }
 
 function drawMap(svgMapObject) {
 
-    var   graticule = d3.geo.graticule();
-          graticule.precision(0.001);
-          graticule.extent([[-89.5,20.5],[-88.5,21.5]]);
+    var graticule = d3.geo.graticule();
+        graticule.precision(0.001);
+        graticule.extent([[-89.5,20.5],[-88.5,21.5]]);
 
     d3.json("yuc_muni2.json", function(error, mx) {
       svgMapObject.selectAll("path")
@@ -270,9 +249,6 @@ function drawMap(svgMapObject) {
         .style("stroke-width", ".2px")
         .attr("class", "myyuc")
         .style("fill", "white");
-       //.style("fill", function(){  colorNum=Math.round(Math.random()*100) % 9; return FILLS[colorNum]; });
-       // .style("fill", "transparent");
-       // .attr("class", function(){  myclass="myyuc q" + (Math.round(Math.random()*100) % 10); return myclass; }); 
 
      var g = svgMapObject.append("g");
       
@@ -334,18 +310,24 @@ function updatePolygonColors(timeStep, unprocessedEvents, svgMapObject, position
     if(endDay > unprocessedEvents.length) endDay=unprocessedEvents.length;
 
     for(day=_startDay; day < endDay; day++ ) {
-        var curDayPoints = unprocessedEvents[day];
+        var curDayPoints = unprocessedEvents[day];  //all muni pairs
         if (curDayPoints != null ) {
             // tally infections for each municipality
-            for(i=0; i<curDayPoints.length; i++) {
-                d = curDayPoints[i];
-                muni =  d[3];
-                infection_ct += d[2];
-                if(muni in muni_prevalence) { muni_prevalence[muni]+=d[2]; } else { muni_prevalence[muni]=d[2];}
+            for(muni in curDayPoints ) {
+                if (muni == 'total') continue;
+                infection_ct =curDayPoints[muni];
+
+                if(muni in muni_prevalence) { 
+                    muni_prevalence[muni] += infection_ct; 
+                } else { 
+                  muni_prevalence[muni] = infection_ct;
+                }
             }
         }
     }
-        
+
+    //console.log(muni_prevalence);
+
     //color municipalities by incidence
     muni_objects=svgMapObject.selectAll(".myyuc")[0];        //array of arrays..first element 
     for(midx=0; midx<muni_objects.length; midx++ ) { //106
@@ -363,71 +345,47 @@ function updatePolygonColors(timeStep, unprocessedEvents, svgMapObject, position
                 muni_objects[midx].style["fill"] = d3.rgb(255-yvalue*0.8,255-yvalue*0.5,255-yvalue*0.2);
             }
         } else {
+            //yvalue =Math.round(Math.random()*255);
+            //muni_objects[midx].style["fill"] = d3.rgb(255-yvalue*0.8,255-yvalue*0.5,255-yvalue*0.2);
             muni_objects[midx].style["fill"] = "white";
         }
     }
 
-    $("#curDayDiv").html("Current period: " + _startDay + "-" + endDay );
+    if (position == "right") {
+        $("#curDayDiv").html("Current period: " + _startDay + "-" + endDay );
+    }
 
 }
 
-
 function calculateTimeSeriesData(unprocessedEvents) { 
     var data = [];
-    for(i=0; i < unprocessedEvents.length; i++ ) {
-        var curDayPoints = unprocessedEvents[i];
+    for(i=0; i < unprocessedEvents.length; i++ ) {   //number of days
+        var curDayPoints = unprocessedEvents[i];     //array of [muni, ct] pairs
         var numInf=0;
-        if (curDayPoints != null ) {
-            for(j=0; j<curDayPoints.length; j++) {
-                d = curDayPoints[j];
-                numInf += d[2];
-            }
+        if (curDayPoints != null ) {    
+              numInf = curDayPoints['total'];
         }
         data[i]=[i,numInf];
    }   
    return data;
 }
 
-function updateTimeSeriesIndicator(dayNumber) {
+function updateTimeSeriesIndicator(dayNumber,numInf) {
     timeSeriesIndicatorBar.attr("x", timeSeriesX(dayNumber));
     timeSeriesIndicatorBarText.attr("x", timeSeriesX(dayNumber)+20);
-}
-
-//http://bl.ocks.org/mbostock/3902569
-function updateTimeSeries(dayNumber, numberInfected) {
-    updateTimeSeriesIndicator(dayNumber);
-    timeSeriesIndicatorBarText.text(numberInfected);
-    //timeSeriesIndicatorBarText.text(dayNumber + " " + numberInfected);
-    $("#infectionsDiv").html("# Infections:" + numberInfected);
+    timeSeriesIndicatorBarText.text(numInf);
 }
 
 
 function drawDailyEvents(dayNumber,unprocessedEvents) {
-
-    //clear previous infections
-    for(i=0;i<displayedStash.length; i++) { displayedStash[i].style("display", "none"); }   //hide
-
     var curDayPoints = unprocessedEvents[dayNumber];
     if (curDayPoints != null ) {
-        // draw each infection
-        // Draw only cases, which amount to about 1 out of 36 infections
-        //addTimeSeriesPoint(dayNumber,curDayPoints.length);
-
-        var numInf=0;
-        for(i=0; i<curDayPoints.length; i++) {
-            numInf += curDayPoints[i][2];
-        }
-        updateTimeSeries(dayNumber,numInf);
+        var numInf=curDayPoints['total'];
+        updateTimeSeriesIndicator(dayNumber, numInf);
     }
-
-    var infection_ct = 0;
-    if (curDayPoints != null) { infection_ct = curDayPoints.length; }
-   // $("#curDayDiv").html("Current Day:" + dayNumber );
-   // $("#infectionsDiv").html("#Infections:" + infection_ct);
 }
 
 function update() { 
-    //console.log("Update " + timeStep );
     if ((curDay-startDay) % timeStep == 0){
         updatePolygonColors(timeStep,unprocessedEvents1,svgMapElement1, "left");
         updatePolygonColors(timeStep,unprocessedEvents2,svgMapElement2, "right");
@@ -448,7 +406,7 @@ function stopSimulation() {
 
 function startSimulation() {
   if(updateFunctionTimer == undefined) {
-      updateFunctionTimer = setInterval(update,50);  //r
+      updateFunctionTimer = setInterval(update,1);
   }
 }
 
@@ -467,9 +425,10 @@ function dragstarted(d) {
 }
 
 function dragged(d) {
-    console.log(d);
+    //console.log(d);
     var bbox = document.getElementById('xaxis').getBoundingClientRect();
-    var estimateDay = ((d.x-80+5)/(bbox.width-5))*3750;
+    var estimateDay = ((d.x-100+5)/(bbox.width-5))*unprocessedEvents1.length;
+    //var estimateDay = ((d.x-80+5)/(bbox.width-5))*1000;//*unprocessedEvents1.length;
     estimateDay = estimateDay < 0 ? 0 : estimateDay;
     $("#startingDayBox").val(Math.round(estimateDay));
     changeStartDay();
@@ -478,8 +437,11 @@ function dragged(d) {
     barPos = barPos < 75 ? 75 : 
              barPos > bbox.width + 70 ? bbox.width + 70 :
              barPos;
-    console.log(barPos);
+    //console.log(barPos);
+    
     timeSeriesIndicatorBar.attr("x", d.x = barPos);
+    timeSeriesIndicatorBarText.attr("x", d.x = barPos+20);
+    
 }
 
 function dragended(d) {

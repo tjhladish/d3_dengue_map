@@ -75,6 +75,7 @@ for line in file(locations_file):
         print line
 
 '''
+old format:
 time,type,id,location,serotype,symptomatic,withdrawn
 0,p,550896,113833,4,1,0
 0,p,136572,26568,2,1,0
@@ -85,6 +86,11 @@ time,type,id,location,serotype,symptomatic,withdrawn
 1,p,75739,15700,3,1,0
 1,p,1304,261,3,0,0
 2,p,1789293,370715,2,1,0
+'''
+
+'''
+new format:
+time,id,location,serotype,symtomatic_bool
 '''
 def get_data(epi_data_file):
     data = []
@@ -97,7 +103,7 @@ def get_data(epi_data_file):
             continue
 
         day = int(p[0])
-        locid = int(p[3])
+        locid = int(p[2])
         xctr, yctr = locid_pixel_ctr_map[locid]
 
         #minx = min(minx, xctr)
@@ -124,12 +130,25 @@ def aggregate_data(pixels, data):
 
     json_data = []
     for day in range(len(agg_data)):
+        state_count = 0
 #        print day, len(agg_data[day].keys())
-        json_data.append([])
+        json_data.append({})
+        #json_data.append([])
+        municipality_counts = dict()
         for coord in agg_data[day].keys():
-            json_data[day].append([coord[0], coord[1], agg_data[day][coord]['cases'], agg_data[day][coord]['muni']])
-            #json_data[day].append({'x':coord[0], 'y':coord[1], 'cases':agg_data[day][coord]})
-
+            muni = agg_data[day][coord]['muni']
+            cases = agg_data[day][coord]['cases']
+            state_count += cases
+            if muni not in municipality_counts:
+                municipality_counts[muni] = cases
+            else:
+                municipality_counts[muni] += cases
+        
+        json_data[day]['total'] = state_count
+        for muni, count in municipality_counts.iteritems():
+            json_data[day][muni] = count
+            #json_data[day].append([muni, count])
+            
     return json_data
 
 for epi_data_file in argv[1:]:
@@ -143,17 +162,3 @@ for epi_data_file in argv[1:]:
 
 #output_data = [{'day':n, 'data':[{'muni':name, 'cases':num},{},{}]}, {}, {} ]
 #output_data = [{'day':n, 'data':[{'x':x_val, 'y':y_val, 'cases':num},{},{}]}, {}, {} ]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
