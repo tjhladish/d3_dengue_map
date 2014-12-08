@@ -14,6 +14,8 @@
 .axis line { fill: none; stroke: #000; shape-rendering: crispEdges; }
 .line_base { fill: none; stroke: rgb(230, 127, 51); }
 .line_vac { fill: none; stroke: rgb(51, 127, 204); }
+.text_base { font-size:150%; font-weight:bold; color: rgb(230, 127, 51); }
+.text_vac  { font-size:150%; font-weight:bold; color: rgb(51, 127, 204); }
 </style>
 </head>
 
@@ -43,12 +45,13 @@
             <div class='form-group'>
                 <div class='row'>
                 <label> Starting day:  </label>
-                <input class='input-sm' type="number" id="startingDayBox" class="form-control"  value="100" min="1" max="365" onChange="changeStartDay()"> 
+                <input class='input-sm' type="number" id="startingDayBox" class="form-control"  value="0" min="1" max="365" onChange="changeStartDay()"> 
                 <label>  Time step:  </label>
-                <input class='input-sm' type="number" id="timeStepBox" class="form-control"  value="30" min="1" max="365" size="2" onChange="changeTimeStep()"> 
+                <input class='input-sm' type="number" id="timeStepBox" class="form-control"  value="14" min="1" max="365" size="2" onChange="changeTimeStep()"> 
                 <label> Data set: </label>
                 <select id=dataSetMenu onChange="changeDataSet()" class="form-control" >
-                <option value="mfoi" selected='selected'>   Medium FOI  </option> 
+                <option value="mfoi">   Medium FOI  </option> 
+                <option value="hfoi" selected='selected'>   High FOI  </option> 
                 <!-- <option value="empty" selected='selected'>   Empty  </option> -->
                 </select>
            </div>
@@ -57,16 +60,23 @@
  
 <div class='container'>
   <div class="col-md-12"> 
-    <span id='curDayDiv' class='pull-right'>&nbsp</span>
+    <span id='curDayDiv'> &nbsp </span>
     <div id='tsPlotDiv'> </div>
   </div>
 </div>
 
 <div class='container'>
+
+  <div class="col-md-12"> 
+    <span class='col-md-6 text-center text_base'> Baseline </span>
+    <span class='col-md-6 text-center text_vac'> 14 routine + 15-46 catch-up </span>
+  </div>
+
   <div class="col-md-12"> 
     <div class="col-md-6" id='svgMapDiv1'> </div>
     <div class="col-md-6" id='svgMapDiv2'> </div>
   </div>
+
 </div>
 
 <script>
@@ -84,7 +94,7 @@ var svgMapElement1 = d3.select("#svgMapDiv1").append("svg").attr("width", mapwid
 var svgMapElement2 = d3.select("#svgMapDiv2").append("svg").attr("width", mapwidth).attr("height", height);
 
 //var projection = d3.geo.mercator().scale(16000*mapwidth/1100).center([-88.9, 20.8]);
-var projection = d3.geo.mercator().scale(18*mapwidth).center([-87.5, 20.4]);
+var projection = d3.geo.mercator().scale(18*mapwidth).center([-87.5, 20.3]);
 var path_projector = d3.geo.path().projection(projection);
 
 var curDay=0;
@@ -114,6 +124,7 @@ startDay = changeStartDay();
 function drawTsPlot() {
     if (unprocessedEvents1.length == 0  || unprocessedEvents2.length==0) return;
 
+    d3.select("#tsPlotDiv").selectAll("svg").remove()
     var tsPlotElement = d3.select("#tsPlotDiv").append("svg").attr("width", width).attr("height", tsPlotDivHeight);
     tsPlotElement.selectAll('g').remove()
     tsPlotElement.selectAll('path').remove()
@@ -208,6 +219,20 @@ function drawTsPlot() {
 
     datapoint = {'x':0, 'y':0};
 
+    // vaccination indicator bar
+    tsPlotElement.append("g")
+        .attr("class", "bar")
+        .selectAll("rect")
+        .data([datapoint])
+        .enter().append("rect")
+        .attr("stroke","transparent")
+        .attr("fill", "rgba(51,127,204,0.3)")
+        .attr("x", timeSeriesX(5*365) )
+        .attr("y", tsPlotDivHeight - margin.bottom )
+        .attr("width", width - timeSeriesX(5*365))
+        .attr("height", 9)
+        .call(drag);
+
     var barWidth = 10;
     
     timeSeriesIndicatorBar = tsPlotElement.append("g")
@@ -218,7 +243,6 @@ function drawTsPlot() {
         .attr("stroke","transparent")
         .attr("fill", "rgba(255,0,0,.5)")
         .attr("x", 0 )
-        //.attr("x", function(d) { return timeSeriesX(d.x) - barWidth/2; })
         .attr("y", 0)
         .attr("width", barWidth)
         .attr("height", tsPlotDivHeight - margin.bottom + 5)
