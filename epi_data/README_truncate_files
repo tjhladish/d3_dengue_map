@@ -1,0 +1,8 @@
+the website is expecting five years of no vaccine, followed by 20 years of vaccine campaign.
+
+to shift the day counter by 15 years, do something like this with awk:
+
+
+cat mfoi_base.csv | awk -F',' '{print $1-5475,$2,$3,$4,$5}' OFS=',' | grep -v '^-'  > mfoi
+cat mfoi_vac.csv | awk -F',' '{print $1-5475,$2,$3,$4,$5}' OFS=',' | grep -v '^-'  > vac
+   

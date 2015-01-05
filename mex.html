@@ -50,8 +50,10 @@
                 <input class='input-sm' type="number" id="timeStepBox" class="form-control"  value="14" min="1" max="365" size="2" onChange="changeTimeStep()"> 
                 <label> Data set: </label>
                 <select id=dataSetMenu onChange="changeDataSet()" class="form-control" >
-                <option value="mfoi">   Medium FOI  </option> 
-                <option value="hfoi" selected='selected'>   High FOI  </option> 
+                <option value="mfoi-14">   Medium FOI, 14 </option> 
+                <option value="mfoi-14c">   Medium FOI, 14 + 15-46 catchup </option> 
+                <option value="hfoi-14">   High FOI, 14  </option> 
+                <option value="hfoi-14c" selected='selected'>   High FOI, 14 + 15-46 catchup </option> 
                 <!-- <option value="empty" selected='selected'>   Empty  </option> -->
                 </select>
            </div>
@@ -69,7 +71,7 @@
 
   <div class="col-md-12"> 
     <span class='col-md-6 text-center text_base'> Baseline </span>
-    <span class='col-md-6 text-center text_vac'> 14 routine + 15-46 catch-up </span>
+    <span class='col-md-6 text-center text_vac'> Vaccine starting in year 5 </span>
   </div>
 
   <div class="col-md-12"> 
@@ -113,8 +115,8 @@ var lastDayLength=1;
 function changeStartDay()        { startDay=parseInt($("#startingDayBox").val()); curDay=startDay; return startDay; }
 function changeTimeStep()        { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
 function changeDataSet()         { dataSet = document.getElementById('dataSetMenu').value; 
-                                   getDataset1(dataSet+"_base.json"); 
-                                   getDataset2(dataSet+"_vac.json"); 
+                                   getDataset1(dataSet+"-base.json"); 
+                                   getDataset2(dataSet+"-vac.json"); 
                                    return dataSet; 
                                    }
 function restartSimulation()     { changeStartDay();}
@@ -153,9 +155,11 @@ function drawTsPlot() {
     //yDomain[0] = 0; //-0.1 * yDomain[1]; // This makes it possible to draw a circle that's not cropped
     timeSeriesY.domain(yDomain);
 
-
+    var num_years = 25;
     var xAxis = d3.svg.axis()
-                  .scale(timeSeriesX)
+    //              .scale(timeSeriesX)
+                  .scale( d3.scale.linear().domain([0, num_years]).range([margin.left, width - margin.right]) )
+                  .ticks(6)
                   .orient("bottom");
     var yDomainMagnitude = Math.floor(Math.log(yDomain[1])/Math.LN10);
     var yMaxTick = Math.floor(yDomain[1]/Math.pow(10,yDomainMagnitude)) * Math.pow(10,yDomainMagnitude);
@@ -188,7 +192,7 @@ function drawTsPlot() {
         .attr("dx", "-.71em")
         .attr("y", 40)
         //.style("text-anchor", "end")
-        .text("Day");
+        .text("Year");
 
     tsPlotElement.append("g")
         .attr("class", "y axis")
@@ -228,9 +232,9 @@ function drawTsPlot() {
         .attr("stroke","transparent")
         .attr("fill", "rgba(51,127,204,0.3)")
         .attr("x", timeSeriesX(5*365) )
-        .attr("y", tsPlotDivHeight - margin.bottom )
+        .attr("y", tsPlotDivHeight - margin.bottom + 3)
         .attr("width", width - timeSeriesX(5*365))
-        .attr("height", 9)
+        .attr("height", 4)
         .call(drag);
 
     var barWidth = 10;
