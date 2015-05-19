@@ -1,0 +1,50 @@
+---
+---
+$basecol: rgb(230, 127, 51);
+$vaccolor: rgb(51, 127, 204);
+
+.graticule {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: .3;
+  stroke-width: .5px;
+  &.outline {
+    stroke: #333;
+    stroke-opacity: 1;
+    stroke-width: 1.5px;
+  }
+}
+
+.axis {
+  path, line {
+    fill: none;
+    stroke: #000;
+  }
+  path {
+    stroke-width: 1px;
+  }
+  line {
+    shape-rendering: crispEdges;
+  }
+}
+
+.line {
+  fill: none;
+  &.base {
+    stroke: $basecol;
+  }
+  &.vac {
+    stroke: $vaccolor;
+  }
+}
+
+.text {
+  font-size:150%;
+  font-weight:bold;
+  .base {
+    color:$basecol
+  }
+  .vac {
+    color:$vaccolor
+  }
+}

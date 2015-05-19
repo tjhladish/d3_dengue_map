@@ -1,0 +1,14 @@
+markdown: kramdown
+encoding: utf-8
+exclude:
+ - run.sh
+ - 'README*'
+ - LICENSE
+ - '*.out'
+ - '*.tgz'
+ - '*.py'
+ - '*.csv'
+ - '*.txt'
+ - '*.bac'
+ - '*.orig'
+ - geo_data/

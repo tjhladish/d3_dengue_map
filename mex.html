@@ -1,80 +1,51 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<head>
-     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
-
-<title>Mexico Topojson</title>
-
-<style>
-.graticule { fill: none; stroke: #000; stroke-opacity: .3; stroke-width: .5px; }
-
-.graticule.outline { stroke: #333; stroke-opacity: 1; stroke-width: 1.5px; }
-
-.axis path { fill: none; stroke-width: 1px; stroke: #000; }
-.axis line { fill: none; stroke: #000; shape-rendering: crispEdges; }
-.line_base { fill: none; stroke: rgb(230, 127, 51); }
-.line_vac { fill: none; stroke: rgb(51, 127, 204); }
-.text_base { font-size:150%; font-weight:bold; color: rgb(230, 127, 51); }
-.text_vac  { font-size:150%; font-weight:bold; color: rgb(51, 127, 204); }
-</style>
-</head>
-
-<body>
-
-<script src="http://d3js.org/d3.v3.js"></script>
-<script src="http://d3js.org/topojson.v0.js"></script>
-<script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-<script src="bootstrap/js/bootstrap.min.js"></script>
-
+---
+layout: section
+title: Mexico Topojson
+---
 <nav class="navbar navbar-default" role="navigation">
-    <div class="container">
-        <div class="navbar-header">
-            <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
-                <div class='form-inline'>
-               <button id='startStopButton' class="btn btn-success" onClick="runSimulation()">Start/Stop</button> 
-                <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button> 
-                </div>
-        </div>
+  <div class="container">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
+      <div class='form-inline'>
+        <button id='startStopButton' class="btn btn-success runstate">Start/Stop</button>
+        <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button>
+      </div>
     </div>
+  </div>
 </nav>
 
-
 <div class="container">
-    <div class="col-md-12 form-inline"> 
-            <div class='form-group'>
-                <div class='row'>
-                <label> Starting day:  </label>
-                <input class='input-sm' type="number" id="startingDayBox" class="form-control"  value="0" min="1" max="365" onChange="changeStartDay()"> 
-                <label>  Time step:  </label>
-                <input class='input-sm' type="number" id="timeStepBox" class="form-control"  value="14" min="1" max="365" size="2" onChange="changeTimeStep()"> 
-                <label> Data set: </label>
-                <select id=dataSetMenu onChange="changeDataSet()" class="form-control" >
-                <option value="mfoi-14">   Medium FOI, 14 </option> 
-                <option value="mfoi-14c">   Medium FOI, 14 + 15-46 catchup </option> 
-                <option value="hfoi-14">   High FOI, 14  </option> 
-                <option value="hfoi-14c" selected='selected'>   High FOI, 14 + 15-46 catchup </option> 
-                <!-- <option value="empty" selected='selected'>   Empty  </option> -->
-                </select>
-           </div>
+  <div class="col-md-12 form-inline">
+    <div class='form-group'>
+      <div class='row'>
+        <label>Starting day: <input class='input-sm' type="number" id="startingDayBox" class="form-control"  value="0" min="1" max="365" onChange="changeStartDay()"></label>
+        <label>Time step: <input class='input-sm' type="number" id="timeStepBox" class="form-control"  value="14" min="1" max="365" size="2" onChange="changeTimeStep()"></label>
+        <label>Data set: <select id=dataSetMenu onChange="changeDataSet()" class="form-control" >
+          <option value="mfoi-14" >Medium FOI, 14</option>
+          <option value="mfoi-14c">Medium FOI, 14 + 15-46 catchup </option>
+          <option value="hfoi-14" >High FOI, 14</option>
+          <option value="hfoi-14c" selected='selected'>High FOI, 14 + 15-46 catchup</option>
+          <!-- <option value="empty" selected='selected'>   Empty  </option> -->
+        </select></label>
       </div>
-</div>
- 
-<div class='container'>
-  <div class="col-md-12"> 
-    <span id='curDayDiv'> &nbsp </span>
-    <div id='tsPlotDiv'> </div>
-  </div>
-</div>
-
-<div class='container'>
-
-  <div class="col-md-12"> 
-    <span class='col-md-6 text-center text_base'> Baseline </span>
-    <span class='col-md-6 text-center text_vac'> Vaccine starting in year 5 </span>
+    </div>
   </div>
 
-  <div class="col-md-12"> 
+  <div class='container'>
+    <div class="col-md-12">
+      <span id='curDayDiv'> &nbsp </span>
+      <div id='tsPlotDiv'> </div>
+    </div>
+  </div>
+
+<div class='container'>
+
+  <div class="col-md-12">
+    <span class='col-md-6 text-center text base'> Baseline </span>
+    <span class='col-md-6 text-center text vac'> Vaccine starting in year 5 </span>
+  </div>
+
+  <div class="col-md-12">
     <div class="col-md-6" id='svgMapDiv1'> </div>
     <div class="col-md-6" id='svgMapDiv2'> </div>
   </div>
@@ -82,21 +53,31 @@
 </div>
 
 <script>
-
+var mapProps = {
+  width  : 500,
+  height : 500
+};
+var tsProps = {
+  width  : 1000,
+  height : 500
+}
 
 var width             = 1000;
-var mapwidth          = 500;
 var height            = 500;
 var timeStep          = changeTimeStep(); // Update polygons this often
 var dataSetFilename   = changeDataSet();
 var startDay          = 0;
 var tsPlotDivHeight   = 150;
 
-var svgMapElement1 = d3.select("#svgMapDiv1").append("svg").attr("width", mapwidth).attr("height", height);
-var svgMapElement2 = d3.select("#svgMapDiv2").append("svg").attr("width", mapwidth).attr("height", height);
+// var maps = d3.selectAll("#svgMapDiv1, #svgMapDiv2").append("svg").attr(mapProps);
+
+var svgMapElement1 =
+  d3.select("#svgMapDiv1").append("svg").attr(mapProps);
+var svgMapElement2 =
+  d3.select("#svgMapDiv2").append("svg").attr(mapProps);
 
 //var projection = d3.geo.mercator().scale(16000*mapwidth/1100).center([-88.9, 20.8]);
-var projection = d3.geo.mercator().scale(18*mapwidth).center([-87.5, 20.3]);
+var projection = d3.geo.mercator().scale(18 * mapProps.width).center([-87.5, 20.3]);
 var path_projector = d3.geo.path().projection(projection);
 
 var curDay=0;
@@ -114,17 +95,17 @@ var lastDayLength=1;
 
 function changeStartDay()        { startDay=parseInt($("#startingDayBox").val()); curDay=startDay; return startDay; }
 function changeTimeStep()        { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
-function changeDataSet()         { dataSet = document.getElementById('dataSetMenu').value; 
-                                   getDataset1(dataSet+"-base.json"); 
-                                   getDataset2(dataSet+"-vac.json"); 
-                                   return dataSet; 
+function changeDataSet()         { dataSet = document.getElementById('dataSetMenu').value;
+                                   getDataset1(dataSet+"-base.json");
+                                   getDataset2(dataSet+"-vac.json");
+                                   return dataSet;
                                    }
 function restartSimulation()     { changeStartDay();}
 
 startDay = changeStartDay();
 
 function drawTsPlot() {
-    if (unprocessedEvents1.length == 0  || unprocessedEvents2.length==0) return;
+    if (unprocessedEvents1.length == 0  || unprocessedEvents2.length == 0) return;
 
     d3.select("#tsPlotDiv").selectAll("svg").remove()
     var tsPlotElement = d3.select("#tsPlotDiv").append("svg").attr("width", width).attr("height", tsPlotDivHeight);
@@ -150,7 +131,7 @@ function drawTsPlot() {
     var yDomain2 = d3.extent(data2, function(d) { return d[1]; });
     //console.log(yDomain1);
     //console.log(yDomain2);
-  
+
     var yDomain = [0,Math.max(yDomain1[1], yDomain2[1])];
     //yDomain[0] = 0; //-0.1 * yDomain[1]; // This makes it possible to draw a circle that's not cropped
     timeSeriesY.domain(yDomain);
@@ -177,8 +158,8 @@ function drawTsPlot() {
     tsPlotElement
         .attr("width", width + margin.left + margin.right)
         .attr("height", tsPlotDivHeight + margin.top + margin.bottom)
-      .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     var xAxisOffset = tsPlotDivHeight - 10;
 
@@ -187,7 +168,7 @@ function drawTsPlot() {
         .attr("class", "x axis")
         .attr("transform", "translate(0," + xAxisOffset + ")")
         .call(xAxis)
-      .append("text")
+        .append("text")
         .attr("x", (margin.left + width)/2)
         .attr("dx", "-.71em")
         .attr("y", 40)
@@ -207,12 +188,12 @@ function drawTsPlot() {
 
     tsPlotElement.append("path")
         .datum(data1)
-        .attr("class", "line_base")
+        .attr("class", "line base")
         .attr("d", line);
 
     tsPlotElement.append("path")
         .datum(data2)
-        .attr("class", "line_vac")
+        .attr("class", "line vac")
         .attr("d", line);
 
     var drag = d3.behavior.drag()
@@ -238,7 +219,7 @@ function drawTsPlot() {
         .call(drag);
 
     var barWidth = 10;
-    
+
     timeSeriesIndicatorBar = tsPlotElement.append("g")
         .attr("class", "bar")
         .selectAll("rect")
@@ -279,7 +260,7 @@ function drawMap(svgMapObject) {
         .style("fill", "white");
 
      var g = svgMapObject.append("g");
-      
+
       g.selectAll("path")
         .data(topojson.object(mx, mx.objects.MEX_adm1).geometries)
         .enter().append("path")
@@ -295,8 +276,8 @@ function drawMap(svgMapObject) {
     });
 }
 
-function getDataset1(dataSetFilename) { 
-  $.get("epi_data/".concat(dataSetFilename), function(json_string) { 
+function getDataset1(dataSetFilename) {
+  $.get("epi_data/".concat(dataSetFilename), function(json_string) {
          console.log("Done downloading1...processing");
          unprocessedEvents1 = json_string;
          curDay=startDay;
@@ -304,8 +285,8 @@ function getDataset1(dataSetFilename) {
   });
 }
 
-function getDataset2(dataSetFilename) { 
-  $.get("epi_data/".concat(dataSetFilename), function(json_string) { 
+function getDataset2(dataSetFilename) {
+  $.get("epi_data/".concat(dataSetFilename), function(json_string) {
          console.log("Done downloading2...processing");
          unprocessedEvents2 = json_string;
          curDay=startDay;
@@ -313,8 +294,8 @@ function getDataset2(dataSetFilename) {
   });
 }
 
-function getMuniMetaData() { 
-  $.get("muni_meta_data.json", function(json_string) { 
+function getMuniMetaData() {
+  $.get("muni_meta_data.json", function(json_string) {
          console.log("Done downloading muni meta data processing");
          muniMetaData = json_string;  //already in json format
   });
@@ -345,9 +326,9 @@ function updatePolygonColors(timeStep, unprocessedEvents, svgMapObject, position
                 if (muni == 'total') continue;
                 infection_ct =curDayPoints[muni];
 
-                if(muni in muni_prevalence) { 
-                    muni_prevalence[muni] += infection_ct; 
-                } else { 
+                if(muni in muni_prevalence) {
+                    muni_prevalence[muni] += infection_ct;
+                } else {
                   muni_prevalence[muni] = infection_ct;
                 }
             }
@@ -357,7 +338,7 @@ function updatePolygonColors(timeStep, unprocessedEvents, svgMapObject, position
     //console.log(muni_prevalence);
 
     //color municipalities by incidence
-    muni_objects=svgMapObject.selectAll(".myyuc")[0];        //array of arrays..first element 
+    muni_objects=svgMapObject.selectAll(".myyuc")[0];        //array of arrays..first element
     for(midx=0; midx<muni_objects.length; midx++ ) { //106
         if(midx in muni_prevalence) {
             yvalue=muni_prevalence[midx];
@@ -385,16 +366,16 @@ function updatePolygonColors(timeStep, unprocessedEvents, svgMapObject, position
 
 }
 
-function calculateTimeSeriesData(unprocessedEvents) { 
+function calculateTimeSeriesData(unprocessedEvents) {
     var data = [];
     for(i=0; i < unprocessedEvents.length; i++ ) {   //number of days
         var curDayPoints = unprocessedEvents[i];     //array of [muni, ct] pairs
         var numInf=0;
-        if (curDayPoints != null ) {    
+        if (curDayPoints != null ) {
               numInf = curDayPoints['total'];
         }
         data[i]=[i,numInf];
-   }   
+   }
    return data;
 }
 
@@ -413,37 +394,16 @@ function drawDailyEvents(dayNumber,unprocessedEvents) {
     }
 }
 
-function update() { 
+function update() {
     if ((curDay-startDay) % timeStep == 0){
         updatePolygonColors(timeStep,unprocessedEvents1,svgMapElement1, "left");
         updatePolygonColors(timeStep,unprocessedEvents2,svgMapElement2, "right");
     }
 
-    drawDailyEvents(curDay,unprocessedEvents1);
+    drawDailyEvents(curDay, unprocessedEvents1);
 
     curDay++;
     if (curDay > unprocessedEvents1.length) curDay = 0;
-}
-
-function stopSimulation() { 
-  if(updateFunctionTimer != undefined) {
-      clearInterval(updateFunctionTimer);
-      updateFunctionTimer = undefined;
-  }
-}
-
-function startSimulation() {
-  if(updateFunctionTimer == undefined) {
-      updateFunctionTimer = setInterval(update,1);
-  }
-}
-
-function runSimulation() { 
-    if(updateFunctionTimer == undefined) {
-         startSimulation();
-    } else {
-        stopSimulation();
-    }
 }
 
 function dragstarted(d) {
@@ -462,14 +422,14 @@ function dragged(d) {
     changeStartDay();
     update();
     var barPos = d3.event.x - 5;
-    barPos = barPos < 75 ? 75 : 
+    barPos = barPos < 75 ? 75 :
              barPos > bbox.width + 70 ? bbox.width + 70 :
              barPos;
     //console.log(barPos);
-    
+
     timeSeriesIndicatorBar.attr("x", d.x = barPos);
     timeSeriesIndicatorBarText.attr("x", d.x = barPos+20);
-    
+
 }
 
 function dragended(d) {
@@ -482,4 +442,3 @@ drawMap(svgMapElement2);
 getMuniMetaData();
 
 </script>
-
