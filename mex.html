@@ -7,7 +7,7 @@ title: Mexico Topojson
     <div class="navbar-header">
       <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
       <div class='form-inline'>
-        <button id='startStopButton' class="btn btn-success runstate">Start/Stop</button>
+        <button class="btn btn-success runstate">Start/Stop</button>
         <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button>
       </div>
     </div>
@@ -21,10 +21,14 @@ title: Mexico Topojson
         <label>Starting day: <input class='input-sm' type="number" id="startingDayBox" class="form-control"  value="0" min="1" max="365" onChange="changeStartDay()"></label>
         <label>Time step: <input class='input-sm' type="number" id="timeStepBox" class="form-control"  value="14" min="1" max="365" size="2" onChange="changeTimeStep()"></label>
         <label>Data set: <select id=dataSetMenu onChange="changeDataSet()" class="form-control" >
-          <option value="mfoi-14" >Medium FOI, 14</option>
-          <option value="mfoi-14c">Medium FOI, 14 + 15-46 catchup </option>
-          <option value="hfoi-14" >High FOI, 14</option>
-          <option value="hfoi-14c" selected='selected'>High FOI, 14 + 15-46 catchup</option>
+          <optgroup label="Medium FOI" data-folder="mfoi">
+            <option value="14-vac" >Vaccinate 14 y.o.</option>
+            <option value="14c-vac">Vaccinate 14 y.o. + 15-46 catchup campaign</option>
+          </optgroup>
+          <optgroup label="High FOI" data-folder="hfoi">
+            <option value="14-vac" >Vaccinate 14 y.o.</option>
+            <option value="14c-vac" selected="selected">Vaccinate 14 y.o. + 15-46 catchup campaign</option>
+          </optgroup>
           <!-- <option value="empty" selected='selected'>   Empty  </option> -->
         </select></label>
       </div>
@@ -65,7 +69,6 @@ var tsProps = {
 var width             = 1000;
 var height            = 500;
 var timeStep          = changeTimeStep(); // Update polygons this often
-var dataSetFilename   = changeDataSet();
 var startDay          = 0;
 var tsPlotDivHeight   = 150;
 
@@ -95,11 +98,16 @@ var lastDayLength=1;
 
 function changeStartDay()        { startDay=parseInt($("#startingDayBox").val()); curDay=startDay; return startDay; }
 function changeTimeStep()        { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
-function changeDataSet()         { dataSet = document.getElementById('dataSetMenu').value;
-                                   getDataset1(dataSet+"-base.json");
-                                   getDataset2(dataSet+"-vac.json");
-                                   return dataSet;
-                                   }
+function changeDataSet() {
+  var $s = $('#dataSetMenu');
+  console.log($s.find(':selected').parent());
+  var tar = $s.find(':selected').parent().data('folder');
+  var intervention = $s.val();
+  //dataSet = document.getElementById('dataSetMenu').value;
+  getDataset1(tar+"/base.json");
+  getDataset2(tar+"/"+intervention+".json");
+}
+
 function restartSimulation()     { changeStartDay();}
 
 startDay = changeStartDay();
@@ -437,6 +445,7 @@ function dragended(d) {
 //    startSimulation();
 }
 
+changeDataSet()
 drawMap(svgMapElement1);
 drawMap(svgMapElement2);
 getMuniMetaData();
