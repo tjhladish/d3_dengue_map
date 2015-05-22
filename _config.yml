@@ -4,6 +4,7 @@ exclude:
  - run.sh
  - 'README*'
  - LICENSE
+ - TODO.md
  - '*.out'
  - '*.tgz'
  - '*.py'
@@ -11,4 +12,3 @@ exclude:
  - '*.txt'
  - '*.bac'
  - '*.orig'
- - geo_data/

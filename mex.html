@@ -1,6 +1,7 @@
 ---
 layout: section
 title: Mexico Topojson
+mapsrc: yucatan
 ---
 <nav class="navbar navbar-default" role="navigation">
   <div class="container">
@@ -49,9 +50,13 @@ title: Mexico Topojson
     <span class='col-md-6 text-center text vac'> Vaccine starting in year 5 </span>
   </div>
 
-  <div class="col-md-12">
-    <div class="col-md-6" id='svgMapDiv1'> </div>
-    <div class="col-md-6" id='svgMapDiv2'> </div>
+  <div class="col-md-12 displaymaps" data-map-src="geo_data/{{ page.mapsrc }}/map.json">
+    <div class="col-md-6 map" id='svgMapDiv1'>
+      <svg height="500" width="500"></svg>
+    </div>
+    <div class="col-md-6 map" id='svgMapDiv2'>
+      <svg height="500" width="500"></svg>
+    </div>
   </div>
 
 </div>
@@ -72,12 +77,10 @@ var timeStep          = changeTimeStep(); // Update polygons this often
 var startDay          = 0;
 var tsPlotDivHeight   = 150;
 
-// var maps = d3.selectAll("#svgMapDiv1, #svgMapDiv2").append("svg").attr(mapProps);
-
 var svgMapElement1 =
-  d3.select("#svgMapDiv1").append("svg").attr(mapProps);
+  d3.select("#svgMapDiv1 svg");
 var svgMapElement2 =
-  d3.select("#svgMapDiv2").append("svg").attr(mapProps);
+  d3.select("#svgMapDiv2 svg");
 
 //var projection = d3.geo.mercator().scale(16000*mapwidth/1100).center([-88.9, 20.8]);
 var projection = d3.geo.mercator().scale(18 * mapProps.width).center([-87.5, 20.3]);
@@ -229,7 +232,7 @@ function drawTsPlot() {
     var barWidth = 10;
 
     timeSeriesIndicatorBar = tsPlotElement.append("g")
-        .attr("class", "bar")
+        .attr("class", "sliding bar")
         .selectAll("rect")
         .data([datapoint])
         .enter().append("rect")
@@ -241,12 +244,12 @@ function drawTsPlot() {
         .attr("height", tsPlotDivHeight - margin.bottom + 5)
         .call(drag);
 
-    timeSeriesIndicatorBarText=tsPlotElement.append("text")
-        .attr("id","timeSeriesIndicatorBarText")
-        .attr("x", 0)
-        .attr("y", 5)
-        .attr("dy", ".71em")
-        .attr("fill", "red");
+    timeSeriesIndicatorBarText = tsPlotElement.append("text")
+        .attr({
+          id: "timeSeriesIndicatorBarText",
+          x: 0, y: 5,
+          dy: ".71em", fill: "red"
+        });
 
     updateTimeSeriesIndicator(startDay,"# of infections");
 }
@@ -388,9 +391,11 @@ function calculateTimeSeriesData(unprocessedEvents) {
 }
 
 function updateTimeSeriesIndicator(dayNumber,numInf) {
-    timeSeriesIndicatorBar.attr("x", timeSeriesX(dayNumber));
-    timeSeriesIndicatorBarText.attr("x", timeSeriesX(dayNumber)+20);
-    timeSeriesIndicatorBarText.text(numInf);
+  //console.log(d3.select('#tsPlotDiv svg g.sliding.bar')); //.attr("x", timeSeriesX(dayNumber));
+  //d3.select('#tsPlotDiv svg g.sliding.bar').attr("x", timeSeriesX(dayNumber))
+  timeSeriesIndicatorBar.attr("x", timeSeriesX(dayNumber))
+  timeSeriesIndicatorBarText.attr("x", timeSeriesX(dayNumber)+20);
+  timeSeriesIndicatorBarText.text(numInf);
 }
 
 
