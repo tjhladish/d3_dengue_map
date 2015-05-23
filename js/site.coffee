@@ -27,18 +27,11 @@ window.updatePolygonColors = (start, timeStep, unprocessedEvents, svgMapObject, 
       acc[muni] ?= 0
       acc[muni] += infections
     acc
-
-  for muni_obj, muni_id in svgMapObject.selectAll(".district")[0]
+  svgMapObject.selectAll(".district").style "fill-opacity", (d, muni_id) ->
     if muni_prevalence[muni_id]?
-      yvalue = (1000.0 / timeStep) * (muni_prevalence[muni_id] / (muniMetaData[muni_id]["pop"] || 1)) * 255
-      yvalue = 255 if yvalue > 255
-      muni_obj.style["fill-opacity"] = yvalue/255
-      # if position == "left"
-      #
-      # else
-      #   muni_obj.style["fill"] = d3.rgb 255-yvalue*0.8, 255-yvalue*0.5, 255-yvalue*0.2
+      Math.min((1000.0 / timeStep) * (muni_prevalence[muni_id] / (muniMetaData[muni_id]["pop"] || 1)) * 255, 255)/255
     else
-      muni_obj.style["fill-opacity"] = 0.0
+      0.0
 
   if position == "right"
     $("#curDayDiv").html("Current period: "+start+"-"+end)
