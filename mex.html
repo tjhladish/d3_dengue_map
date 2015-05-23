@@ -4,19 +4,14 @@ title: Mexico Topojson
 mapsrc: yucatan
 ---
 <nav class="navbar navbar-default" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
+    <div class="navbar-header text-center">
       <a class="navbar-brand" href="#">Dengue Sim Visualization</a>
-      <div class='form-inline'>
-        <button class="btn btn-success runstate">Start/Stop</button>
-        <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button>
-      </div>
     </div>
   </div>
 </nav>
 
 <div class="container">
-  <div class="col-md-12 form-inline">
+  <div class="col-md-12 form-inline text-center">
     <div class='form-group'>
       <div class='row'>
         <label>Starting day: <input class='input-sm' type="number" id="startingDayBox" class="form-control"  value="0" min="1" max="365" onChange="changeStartDay()"></label>
@@ -32,6 +27,8 @@ mapsrc: yucatan
           </optgroup>
           <!-- <option value="empty" selected='selected'>   Empty  </option> -->
         </select></label>
+        <button class="btn btn-success runstate">Start/Stop</button>
+        <button  id='restart' class="btn btn-primary" onClick="restartSimulation()">Restart</button>
       </div>
     </div>
   </div>
@@ -51,10 +48,10 @@ mapsrc: yucatan
   </div>
 
   <div class="col-md-12 displaymaps" data-map-src="geo_data/{{ page.mapsrc }}/map.json">
-    <div class="col-md-6 map" id='svgMapDiv1'>
+    <div class="col-md-6 map base" id='svgMapDiv1'>
       <svg height="500" width="500"></svg>
     </div>
-    <div class="col-md-6 map" id='svgMapDiv2'>
+    <div class="col-md-6 map vac" id='svgMapDiv2'>
       <svg height="500" width="500"></svg>
     </div>
   </div>
@@ -267,8 +264,7 @@ function drawMap(svgMapObject) {
         .attr("d", path_projector)
         .style("stroke", "#333")
         .style("stroke-width", ".2px")
-        .attr("class", "myyuc")
-        .style("fill", "white");
+        .attr("class", "district");
 
      var g = svgMapObject.append("g");
 
@@ -312,71 +308,6 @@ function getMuniMetaData() {
   });
 }
 
-
-function getColor(value) {
-    var min=0;  var max=5;
-    var s = (value-min)/(max-min);
-    return d3.hsl(360.0, 100,0.5); //h,s,l red
-}
-
-function updatePolygonColors(timeStep, unprocessedEvents, svgMapObject, position) {
-    //muniColorLookup
-    var muni_prevalence={};
-    var infection_ct=0;
-
-    var _startDay = curDay;
-    if(_startDay > unprocessedEvents.length) { _startDay=0; curDay=0; }
-    var endDay = _startDay+timeStep;
-    if(endDay > unprocessedEvents.length) endDay=unprocessedEvents.length;
-
-    for(day=_startDay; day < endDay; day++ ) {
-        var curDayPoints = unprocessedEvents[day];  //all muni pairs
-        if (curDayPoints != null ) {
-            // tally infections for each municipality
-            for(muni in curDayPoints ) {
-                if (muni == 'total') continue;
-                infection_ct =curDayPoints[muni];
-
-                if(muni in muni_prevalence) {
-                    muni_prevalence[muni] += infection_ct;
-                } else {
-                  muni_prevalence[muni] = infection_ct;
-                }
-            }
-        }
-    }
-
-    //console.log(muni_prevalence);
-
-    //color municipalities by incidence
-    muni_objects=svgMapObject.selectAll(".myyuc")[0];        //array of arrays..first element
-    for(midx=0; midx<muni_objects.length; midx++ ) { //106
-        if(midx in muni_prevalence) {
-            yvalue=muni_prevalence[midx];
-            populationSize = muniMetaData[midx]["pop"];
-            if ( populationSize == undefined) populationSize=1;
-            intensity_rescale = 1000.0/timeStep;
-            yvalue = intensity_rescale * (yvalue/populationSize)*255;
-
-            if (yvalue > 255) { yvalue = 255; }
-            if (position == "left") {
-                muni_objects[midx].style["fill"] = d3.rgb(255-yvalue*0.1, 255-yvalue*0.5, 255-yvalue*0.8);
-            } else {
-                muni_objects[midx].style["fill"] = d3.rgb(255-yvalue*0.8,255-yvalue*0.5,255-yvalue*0.2);
-            }
-        } else {
-            //yvalue =Math.round(Math.random()*255);
-            //muni_objects[midx].style["fill"] = d3.rgb(255-yvalue*0.8,255-yvalue*0.5,255-yvalue*0.2);
-            muni_objects[midx].style["fill"] = "white";
-        }
-    }
-
-    if (position == "right") {
-        $("#curDayDiv").html("Current period: " + _startDay + "-" + endDay );
-    }
-
-}
-
 function calculateTimeSeriesData(unprocessedEvents) {
     var data = [];
     for(i=0; i < unprocessedEvents.length; i++ ) {   //number of days
@@ -409,8 +340,8 @@ function drawDailyEvents(dayNumber,unprocessedEvents) {
 
 function update() {
     if ((curDay-startDay) % timeStep == 0){
-        updatePolygonColors(timeStep,unprocessedEvents1,svgMapElement1, "left");
-        updatePolygonColors(timeStep,unprocessedEvents2,svgMapElement2, "right");
+        updatePolygonColors(curDay, timeStep, unprocessedEvents1, svgMapElement1, "left");
+        updatePolygonColors(curDay, timeStep, unprocessedEvents2, svgMapElement2, "right");
     }
 
     drawDailyEvents(curDay, unprocessedEvents1);

@@ -38,13 +38,25 @@ $vaccolor: rgb(51, 127, 204);
   }
 }
 
+.map {
+  path.district {
+    fill-opacity:0.0;
+  }
+  &.base path.district {
+    fill: $basecol;
+  }
+  &.vac path.district {
+    fill: $vaccolor;
+  }
+}
+
 .text {
   font-size:150%;
   font-weight:bold;
-  .base {
-    color:$basecol
+  &.base {
+    color:$basecol;
   }
-  .vac {
-    color:$vaccolor
+  &.vac {
+    color:$vaccolor;
   }
 }
