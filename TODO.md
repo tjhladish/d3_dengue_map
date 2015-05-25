@@ -2,7 +2,7 @@
 
  - re-organize gis data a bit
  - use `def` for map layer, then point all sub div svgs at that def
- - color maps once, then use alpha channel to adjust display during sim?
+ - use d3.timer to drive animation
 
 ## jq clean up items:
 

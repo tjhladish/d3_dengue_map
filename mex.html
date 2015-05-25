@@ -47,7 +47,9 @@ mapsrc: yucatan
     <span class='col-md-6 text-center text vac'> Vaccine starting in year 5 </span>
   </div>
 
-  <div class="col-md-12 displaymaps" data-map-src="geo_data/{{ page.mapsrc }}/map.json">
+  <div class="col-md-12 displaymaps" id="displaymaps"
+    data-map-src="geo_data/{{ page.mapsrc }}/map.json"
+    data-map-meta-src="geo_data/{{ page.mapsrc }}/meta.json">
     <div class="col-md-6 map base" id='svgMapDiv1'>
       <svg height="500" width="500"></svg>
     </div>
@@ -92,7 +94,6 @@ var xAxisSVGElement=undefined;
 
 var unprocessedEvents1=[];
 var unprocessedEvents2=[];
-var muniMetaData={};
 var updateFunctionTimer=undefined;
 var lastDayLength=1;
 
@@ -104,16 +105,19 @@ function changeDataSet() {
   var tar = $s.find(':selected').parent().data('folder');
   var intervention = $s.val();
   //dataSet = document.getElementById('dataSetMenu').value;
-  getDataset1(tar+"/base.json");
-  getDataset2(tar+"/"+intervention+".json");
+  $.when(getDataset1(tar+"/base.json"), getDataset2(tar+"/"+intervention+".json")).done(function(){
+    curDay = startDay;
+    drawTsPlot(unprocessedEvents1, unprocessedEvents2);
+
+  });
 }
 
 function restartSimulation()     { changeStartDay();}
 
 startDay = changeStartDay();
 
-function drawTsPlot() {
-    if (unprocessedEvents1.length == 0  || unprocessedEvents2.length == 0) return;
+function drawTsPlot(baseEvents, interventionEvents) {
+    if (baseEvents.length == 0  || interventionEvents.length == 0) return;
 
     d3.select("#tsPlotDiv").selectAll("svg").remove()
     var tsPlotElement = d3.select("#tsPlotDiv").append("svg").attr("width", width).attr("height", tsPlotDivHeight);
@@ -121,8 +125,8 @@ function drawTsPlot() {
     tsPlotElement.selectAll('path').remove()
     tsPlotElement.selectAll('text').remove()
 
-    var data1 = calculateTimeSeriesData(unprocessedEvents1);
-    var data2 = calculateTimeSeriesData(unprocessedEvents2);
+    var data1 = calculateTimeSeriesData(baseEvents);
+    var data2 = calculateTimeSeriesData(interventionEvents);
 
     //http://www.janwillemtulp.com/2011/04/01/tutorial-line-chart-in-d3/
     //http://bl.ocks.org/mbostock/3883245
@@ -137,8 +141,6 @@ function drawTsPlot() {
     timeSeriesX.domain(xDomain);
     var yDomain1 = d3.extent(data1, function(d) { return d[1]; });
     var yDomain2 = d3.extent(data2, function(d) { return d[1]; });
-    //console.log(yDomain1);
-    //console.log(yDomain2);
 
     var yDomain = [0,Math.max(yDomain1[1], yDomain2[1])];
     //yDomain[0] = 0; //-0.1 * yDomain[1]; // This makes it possible to draw a circle that's not cropped
@@ -251,86 +253,28 @@ function drawTsPlot() {
     updateTimeSeriesIndicator(startDay,"# of infections");
 }
 
-function drawMap(svgMapObject) {
-
-    var graticule = d3.geo.graticule();
-        graticule.precision(0.001);
-        graticule.extent([[-89.5,20.5],[-88.5,21.5]]);
-
-    d3.json("yuc_muni2.json", function(error, mx) {
-      svgMapObject.selectAll("path")
-        .data(topojson.object(mx, mx.objects.yucatan_municipalities).geometries)
-        .enter().append("path")
-        .attr("d", path_projector)
-        .attr("class", "district");
-
-      svgMapObject.append("g").selectAll("path")
-        .data(topojson.object(mx, mx.objects.MEX_adm1).geometries)
-        .enter().append("path")
-        .attr("class", "admin")
-        .attr("d", path_projector)
-
-      svgMapObject.append("path")
-        .datum(graticule)
-        .attr("class", "graticule")
-        .attr("d", path_projector);
-
-    });
-}
-
 function getDataset1(dataSetFilename) {
-  $.get("epi_data/".concat(dataSetFilename), function(json_string) {
+  return $.get("epi_data/".concat(dataSetFilename), function(json_string) {
          console.log("Done downloading1...processing");
          unprocessedEvents1 = json_string;
-         curDay=startDay;
-         drawTsPlot();
+         // TODO change to storage on something?
   });
 }
 
 function getDataset2(dataSetFilename) {
-  $.get("epi_data/".concat(dataSetFilename), function(json_string) {
+  return $.get("epi_data/".concat(dataSetFilename), function(json_string) {
          console.log("Done downloading2...processing");
          unprocessedEvents2 = json_string;
-         curDay=startDay;
-         drawTsPlot();
+         // TODO change to storage on something?
   });
 }
 
-function getMuniMetaData() {
-  $.get("muni_meta_data.json", function(json_string) {
-         console.log("Done downloading muni meta data processing");
-         muniMetaData = json_string;  //already in json format
-  });
-}
-
-function calculateTimeSeriesData(unprocessedEvents) {
-    var data = [];
-    for(i=0; i < unprocessedEvents.length; i++ ) {   //number of days
-        var curDayPoints = unprocessedEvents[i];     //array of [muni, ct] pairs
-        var numInf=0;
-        if (curDayPoints != null ) {
-              numInf = curDayPoints['total'];
-        }
-        data[i]=[i,numInf];
-   }
-   return data;
-}
-
-function updateTimeSeriesIndicator(dayNumber,numInf) {
-  //console.log(d3.select('#tsPlotDiv svg g.sliding.bar')); //.attr("x", timeSeriesX(dayNumber));
-  //d3.select('#tsPlotDiv svg g.sliding.bar').attr("x", timeSeriesX(dayNumber))
-  timeSeriesIndicatorBar.attr("x", timeSeriesX(dayNumber))
-  timeSeriesIndicatorBarText.attr("x", timeSeriesX(dayNumber)+20);
-  timeSeriesIndicatorBarText.text(numInf);
-}
-
-
-function drawDailyEvents(dayNumber,unprocessedEvents) {
-    var curDayPoints = unprocessedEvents[dayNumber];
-    if (curDayPoints != null ) {
-        var numInf=curDayPoints['total'];
-        updateTimeSeriesIndicator(dayNumber, numInf);
-    }
+function updateTimeSeriesIndicator(dayNumber, numInf) {
+  timeSeriesIndicatorBar
+    .attr("x", timeSeriesX(dayNumber))
+  timeSeriesIndicatorBarText
+    .attr("x", timeSeriesX(dayNumber)+20)
+    .text(numInf);
 }
 
 function update() {
@@ -377,8 +321,7 @@ function dragended(d) {
 }
 
 changeDataSet()
-drawMap(svgMapElement1);
-drawMap(svgMapElement2);
-getMuniMetaData();
+drawMap(svgMapElement1, $('#displaymaps').data('mapSrc'));
+drawMap(svgMapElement2, $('#displaymaps').data('mapSrc'));
 
 </script>

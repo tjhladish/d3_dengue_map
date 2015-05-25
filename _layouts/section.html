@@ -5,10 +5,10 @@
   <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="css/site.css">
   <title>{{ page.title }}</title>
-  <script src="http://d3js.org/d3.v3.js"></script>
-  <script src="http://d3js.org/topojson.v0.js"></script>
-  <script src="http://d3js.org/d3.geo.projection.v0.min.js"></script>
-  <script src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+  <script src="{% unless site.local %}http://d3js.org/{% endunless %}d3.v3.min.js"></script>
+  <script src="{% unless site.local %}http://d3js.org/{% endunless %}topojson.v1.min.js"></script>
+  <script src="{% unless site.local %}http://d3js.org/{% endunless %}d3.geo.projection.v0.min.js"></script>
+  <script src="{% unless site.local %}http://code.jquery.com/{% endunless %}jquery-2.1.4.min.js"></script>
   <script src="bootstrap/js/bootstrap.min.js"></script>
   <script src="js/site.js"></script>
 </head>
