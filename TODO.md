@@ -1,6 +1,8 @@
 ## interface
 
  - make interventions multiselect, dynamically show as many time series as requested
+ - for time series, make whole region "draggable" - i.e., instead of requiring click
+ exactly on the bar, click and drag anywhere will move the bar accordingly
 
 ## d3 clean up items:
 
