@@ -16,7 +16,7 @@ mapsrc: yucatan
       <div class='row'>
         <label>Starting day: <input class='input-sm' type="number" id="startingDayBox" class="form-control"  value="0" min="1" max="365" onChange="changeStartDay()"></label>
         <label>Time step: <input class='input-sm' type="number" id="timeStepBox" class="form-control"  value="14" min="1" max="365" size="2" onChange="changeTimeStep()"></label>
-        <label>Data set: <select id=dataSetMenu onChange="changeDataSet()" class="form-control" >
+        <label>Data set: <select id="dataSetMenu" class="form-control" >
           <optgroup label="Medium FOI" data-folder="mfoi">
             <option value="14-vac" >Vaccinate 14 y.o.</option>
             <option value="14c-vac">Vaccinate 14 y.o. + 15-46 catchup campaign</option>
@@ -99,18 +99,6 @@ var lastDayLength=1;
 
 function changeStartDay()        { startDay=parseInt($("#startingDayBox").val()); curDay=startDay; return startDay; }
 function changeTimeStep()        { timeStep=parseInt($("#timeStepBox").val()); return timeStep; }
-function changeDataSet() {
-  var $s = $('#dataSetMenu');
-  console.log($s.find(':selected').parent());
-  var tar = $s.find(':selected').parent().data('folder');
-  var intervention = $s.val();
-  //dataSet = document.getElementById('dataSetMenu').value;
-  $.when(getDataset1(tar+"/base.json"), getDataset2(tar+"/"+intervention+".json")).done(function(){
-    curDay = startDay;
-    drawTsPlot(unprocessedEvents1, unprocessedEvents2);
-
-  });
-}
 
 function restartSimulation()     { changeStartDay();}
 
@@ -320,8 +308,6 @@ function dragended(d) {
 //    startSimulation();
 }
 
-changeDataSet()
 drawMap(svgMapElement1, $('#displaymaps').data('mapSrc'));
 drawMap(svgMapElement2, $('#displaymaps').data('mapSrc'));
-
 </script>

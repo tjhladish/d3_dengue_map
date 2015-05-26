@@ -1,3 +1,7 @@
+## interface
+
+ - make interventions multiselect, dynamically show as many time series as requested
+
 ## d3 clean up items:
 
  - re-organize gis data a bit
@@ -19,3 +23,7 @@
  - make an index of all comparisons
 
 ## figure out wtf py
+
+## source
+
+ - base / intervention series should have identical introduction series
